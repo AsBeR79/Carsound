@@ -143,6 +143,7 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
       </div>
 
       <label class="vol" for="vol">Volum <input type="range" id="vol" min="0" max="100" value="70"></label>
+      <label class="vol" for="whistle" id="whistleRow" hidden>Plystring <input type="range" id="whistle" min="0" max="200" value="100"></label>
 
       <details>
         <summary>Slik regnes lyden ut</summary>
@@ -342,17 +343,25 @@ function makeEngineDSP(sr, cfg) {
     for (let i=0;i<nd.length;i++) nd[i] = Math.random()*2-1;
     const whine1 = ctx.createOscillator(); whine1.type = 'sine';
     const whine2 = ctx.createOscillator(); whine2.type = 'sine';
-    const gW1 = ctx.createGain(), gW2 = ctx.createGain(); gW1.gain.value = 1; gW2.gain.value = .3;
-    const tHp = ctx.createBiquadFilter(); tHp.type = 'highpass'; tHp.frequency.value = 1200;
+    const whine3 = ctx.createOscillator(); whine3.type = 'triangle';
+    const gW1 = ctx.createGain(), gW2 = ctx.createGain(), gW3 = ctx.createGain();
+    gW1.gain.value = 1; gW2.gain.value = .45; gW3.gain.value = .18;
+    // Lett vibrato: turboakselen varierer litt i turtall med eksospulsene
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 6.5;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 14;
+    lfo.connect(lfoG); [whine1, whine2, whine3].forEach(o => lfoG.connect(o.detune));
+    const tHp = ctx.createBiquadFilter(); tHp.type = 'highpass'; tHp.frequency.value = 900;
+    const tPk = ctx.createBiquadFilter(); tPk.type = 'peaking'; tPk.frequency.value = 5000; tPk.Q.value = .8; tPk.gain.value = 4;
     const tG = ctx.createGain(); tG.gain.value = 0;
-    whine1.connect(gW1).connect(tHp); whine2.connect(gW2).connect(tHp); tHp.connect(tG).connect(master);
+    whine1.connect(gW1).connect(tHp); whine2.connect(gW2).connect(tHp); whine3.connect(gW3).connect(tHp);
+    tHp.connect(tPk).connect(tG).connect(master);
     const air = ctx.createBufferSource(); air.buffer = nb; air.loop = true;
     const airBp = ctx.createBiquadFilter(); airBp.type = 'bandpass'; airBp.Q.value = 2.5;
     const airG = ctx.createGain(); airG.gain.value = 0;
     air.connect(airBp).connect(airG).connect(master);
-    [whine1, whine2, air].forEach(o => o.start());
+    [whine1, whine2, whine3, lfo, air].forEach(o => o.start());
 
-    A = { ctx, master, send, body, exG, rasp, lp, ibp, inG, gStart, starter, nb, whine1, whine2, tG, airBp, airG };
+    A = { ctx, master, send, body, exG, rasp, lp, ibp, inG, gStart, starter, nb, whine1, whine2, whine3, tG, airBp, airG };
   }
 
   // Blåseventil: trykkluft slippes ut når gassen slippes med trykk i systemet
@@ -390,12 +399,13 @@ function makeEngineDSP(sr, cfg) {
     A.ibp.frequency.setTargetAtTime(Math.min(7000, f*2), t, .02);
     A.inG.gain.setTargetAtTime(S.running ? (.15 + 1.3*e) * Math.pow(hi, 1.4) * M.intake : 0, t, .04);
     // Turbo
-    const b = E.turbo ? S.boost : 0, w = 1600 + b*5600;
+    const b = E.turbo ? S.boost : 0, w = 1700 + b*6000, wv = whistle.value/100;
     A.whine1.frequency.setTargetAtTime(w, t, .03);
     A.whine2.frequency.setTargetAtTime(w*2.02, t, .03);
-    A.tG.gain.setTargetAtTime(b*b*(.06 + .1*S.thr), t, .05);
+    A.whine3.frequency.setTargetAtTime(w*3.01, t, .03);
+    A.tG.gain.setTargetAtTime(Math.pow(b, 1.4)*(.16 + .2*S.thr)*wv, t, .04);
     A.airBp.frequency.setTargetAtTime(400 + w*.4, t, .05);
-    A.airG.gain.setTargetAtTime(b*(.015 + .05*S.thr), t, .05);
+    A.airG.gain.setTargetAtTime(b*(.03 + .08*S.thr)*wv, t, .05);
     A.gStart.gain.setTargetAtTime(S.starting > 0 ? .1 : 0, t, .03);
     A.starter.frequency.setTargetAtTime(150 + Math.sin(t*38)*25, t, .01);
   }
@@ -632,7 +642,7 @@ function makeEngineDSP(sr, cfg) {
   }
 
   // ---------- Kontroller ----------
-  const vol = $('vol');
+  const vol = $('vol'), whistle = $('whistle');
   vol.addEventListener('input', () => { if (A) A.master.gain.setTargetAtTime(vol.value/100, A.ctx.currentTime, .05); });
 
   let wake = null;
@@ -701,6 +711,7 @@ function makeEngineDSP(sr, cfg) {
     $('eyebrow').textContent = E.eyebrow;
     $('h1').innerHTML = `${E.label} <span>Motorlyd</span>`;
     $('hzLabel').textContent = E.turbo ? 'Boost' : 'Tenning';
+    $('whistleRow').hidden = !E.turbo;
     S.rpm = Math.min(S.rpm, E.redline); S.boost = 0; S.bovArmed = false;
     applyEngineAudio();
     try { localStorage.setItem('motorlyd-engine', key); } catch {}
