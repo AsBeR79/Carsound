@@ -52,7 +52,17 @@ button:focus-visible,.pad:focus-visible,input:focus-visible,summary:focus-visibl
 .readouts dd{margin:2px 0 0;font-family:var(--display);font-weight:600;font-size:22px;font-variant-numeric:tabular-nums;white-space:nowrap}
 
 .controls{display:flex;flex-direction:column;gap:16px;min-width:0}
+.engines{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.eng{text-align:left;font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.eng b{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.02em;overflow-wrap:anywhere}
+.eng span{font-size:13px;color:var(--muted)}
+.eng[aria-checked="true"]{border-color:var(--amber);background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--amber)}
+.eng[aria-checked="true"] b{color:var(--amber)}
+.engine-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ghost{font:600 14px var(--body);color:var(--fg);background:transparent;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+.ghost:hover{border-color:var(--muted)}
 .start{font:700 18px var(--display);text-transform:uppercase;letter-spacing:.14em;color:#120c03;background:var(--amber);border:0;border-radius:12px;padding:18px;cursor:pointer;box-shadow:0 0 0 4px #ffb24022}
+.start:disabled{opacity:.45;cursor:default}
 .start.on{background:var(--panel-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
 .panel h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--muted);margin:0}
@@ -60,7 +70,6 @@ button:focus-visible,.pad:focus-visible,input:focus-visible,summary:focus-visibl
 .pad{position:relative;height:190px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;font:700 15px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--fg)}
 .pad .fill{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(to top,#ffb24055,#ffb24018)}
 .pad span{position:relative}
-.pad.brake{color:var(--fg)}
 .pad.brake.down{background:#ee3b2e33;border-color:var(--red)}
 .hint{font-size:13px;color:var(--muted);margin:0}
 kbd{font:600 12px var(--body);background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--fg)}
@@ -69,7 +78,8 @@ kbd{font:600 12px var(--body);background:var(--panel-2);border:1px solid var(--l
 .status dd{margin:0;font-variant-numeric:tabular-nums}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px;vertical-align:1px}
 .dot.ok{background:var(--green)} .dot.wait{background:var(--amber)} .dot.err{background:var(--red)}
-.msg{font-size:14px;border-left:3px solid var(--amber);padding:8px 10px;background:var(--panel-2);border-radius:0 8px 8px 0;margin:0}
+.msg{font-size:14px;border-left:3px solid var(--amber);padding:8px 10px;background:var(--panel-2);border-radius:0 8px 8px 0;margin:0;overflow-wrap:anywhere}
+.msg.err{border-left-color:var(--red)}
 .vol{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
 .vol input{flex:1;accent-color:var(--amber);min-width:0}
 details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
@@ -78,20 +88,14 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
 .ratios{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-variant-numeric:tabular-nums}
 .ratios span{font-family:var(--display);background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
 .foot{font-size:13px;color:var(--muted);max-width:70ch}
-.engines{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.eng{text-align:left;font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
-.eng b{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.02em}
-.eng span{font-size:13px;color:var(--muted)}
-.eng[aria-checked="true"]{border-color:var(--amber);background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--amber)}
-.eng[aria-checked="true"] b{color:var(--amber)}
 @media (prefers-reduced-motion:reduce){.lights i{transition:none}}
 </style>
 
 <div class="app">
   <header class="top">
     <div>
-      <div class="eyebrow" id="eyebrow">Syntetisk V10 · 10 sylindre · rødt felt 8250 o/min</div>
-      <h1 id="h1">V10 <span>Motorlyd</span></h1>
+      <div class="eyebrow" id="eyebrow">Laster motorer…</div>
+      <h1 id="h1">Motor<span>lyd</span></h1>
     </div>
     <div class="seg" role="tablist" aria-label="Modus">
       <button id="tabSim" role="tab" aria-selected="true">Simulator</button>
@@ -116,11 +120,13 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
     </section>
 
     <section class="controls">
-      <div class="engines" role="radiogroup" aria-label="Velg motor">
-        <button class="eng" role="radio" aria-checked="true" data-engine="v10" id="engV10"><b>V10</b><span>Atmosfærisk · 8250 o/min</span></button>
-        <button class="eng" role="radio" aria-checked="false" data-engine="r6t" id="engR6t"><b>Turbo R6</b><span>Plystring · blåseventil</span></button>
+      <div class="engines" id="engines" role="radiogroup" aria-label="Velg motor"></div>
+      <div class="engine-tools">
+        <button class="ghost" id="importBtn" type="button">Importer motor (.json)</button>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
       </div>
-      <button class="start" id="start">Start motor</button>
+      <p class="msg" id="engMsg" hidden></p>
+      <button class="start" id="start" disabled>Start motor</button>
 
       <div class="panel" id="simPanel">
         <h2>Simulator</h2>
@@ -147,66 +153,145 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
 
       <details>
         <summary>Slik regnes lyden ut</summary>
-        <p>Lyden er syntetisert i nettleseren, uten opptak. Hver sylinder sender en eksospuls i V10-rekkefølgen 1-6-5-10-2-7-3-8-4-9, med 72 graders avstand. Pulsene fra hver sylinderrekke går gjennom sitt eget grenrør, så videre til et samlerør og en lyddemper, som alle er simulert som rør med refleksjoner. Grunntonen blir o/min ÷ 60 × 5, altså 688 Hz ved 8250 o/min. At de to rekkene ikke er helt like, gir den knurrende undertonen. Innsuget fra de ti gasspjeldene gir hylet ved full gass og høyt turtall.</p>
-        <p>Turtallet kommer fra farten og en simulert sjutrinns girkasse med slutteveksling 3,62 og et hjul med omkrets 2,13 m. Gasspådraget avgjør når den skifter opp og hvor rå lyden blir. Slipper du gassen på høyt turtall, gir feiltenninger og smell i eksosen den typiske knitringen. Ved oppgiring kuttes tenningen et øyeblikk, slik en sekvensiell girkasse gjør.</p>
-        <p>Turbo R6 tenner i rekkefølgen 1-5-3-6-2-4, én gang hver 120. grad, så grunntonen er o/min ÷ 60 × 3. Turbinen demper eksospulsene, så lyden blir rundere og dypere. Trykket bygger seg opp med forsinkelse når du gir gass, og plystringen stiger i tone etter hvert som turboen spinner opp. Slipper du gassen eller gir opp med trykk i systemet, åpner blåseventilen og slipper ut luften med et pust.</p>
+        <p id="engineAbout"></p>
+        <p>Lyden er syntetisert i nettleseren, uten opptak. Hver sylinder sender en eksospuls ved sin tenningsvinkel. Pulsene fra hver sylinderrekke går gjennom sitt eget grenrør, så videre til et samlerør og en lyddemper, som alle er simulert som rør med refleksjoner. Resonansfiltre gir klangen, og deltoner på faste multipler av veivakselfrekvensen gir motoren en tydelig tone.</p>
+        <p>Turtallet kommer fra farten og en simulert sjutrinns girkasse med slutteveksling 3,62 og et hjul med omkrets 2,13 m. Gasspådraget avgjør når den skifter opp og hvor rå lyden blir. Slipper du gassen på høyt turtall, gir feiltenninger og smell i eksosen knitringen. Ved oppgiring kuttes tenningen et øyeblikk.</p>
         <div class="ratios" id="ratios"></div>
+        <p>Hver motor er en JSON-fil i mappen <code>engines/</code> med tenningsvinkler, sylinderrekker, turtall, eksosrør, resonanser, deltoner og eventuell turbo. Lag din egen og legg den til med «Importer motor».</p>
         <p>I GPS-modus kommer farten fra posisjonen omtrent én gang i sekundet. Akselerometeret fyller inn mellom målingene, slik at lyden reagerer med en gang du gir gass.</p>
       </details>
     </section>
   </main>
 
-  <p class="foot">GPS og bevegelsessensorer er blokkert inne i Claude. Simulatoren virker her. For å bruke siden i bilen må filen ligge på en HTTPS-adresse og åpnes i mobilens nettleser. Fest telefonen i en holder og ikke se på skjermen mens du kjører.</p>
+  <p class="foot">GPS og bevegelsessensorer er blokkert inne i Claude. Simulatoren virker her. For å bruke siden i bilen må den ligge på en HTTPS-adresse og åpnes i mobilens nettleser. Fest telefonen i en holder og ikke se på skjermen mens du kjører.</p>
 </div>
 
 <script>
 (() => {
+  const $ = id => document.getElementById(id);
+
   // ---------- Bilmodell ----------
   const RATIOS = [3.985, 2.652, 1.806, 1.392, 1.159, 1.0, 0.833];
   const FINAL = 3.62, CIRC = 2.13;
-  const ENGINES = {
-    v10: {
-      label:'V10', eyebrow:'Syntetisk V10 · 10 sylindre · rødt felt 8250 o/min',
-      idle:900, redline:8250, maxRpm:9000, accel:5.4, turbo:false,
-      tq:[[0,.5],[1000,.62],[2000,.75],[4000,.88],[6100,1],[7750,.93],[8250,.86],[9000,.6]],
-      dsp:{ order:[1,6,5,10,2,7,3,8,4,9], split:5, cylVar:[1.00,.93,1.06,.97,1.03,.95,1.07,.99,.92,1.05],
-            width0:72, width1:34, pops:1, hdr:[.0050,.0057], coll:.0092, muff:.0034, drive:2.6, intake:1 },
-      mix:{ body:4, bodyF:150, raspBase:2, raspMax:6, lpBase:2200, lpRpm:.7, lpLoad:3500, intake:1.6, ex:2.6 }
-    },
-    r6t: {
-      label:'Turbo R6', eyebrow:'Syntetisk turbo-R6 · 6 sylindre · 1,2 bar · rødt felt 7000 o/min',
-      idle:750, redline:7000, maxRpm:8000, accel:5.6, turbo:true,
-      tq:[[0,.45],[1000,.55],[1800,.95],[2500,1],[5000,1],[6500,.86],[7000,.78],[8000,.5]],
-      dsp:{ order:[1,5,3,6,2,4], split:3, cylVar:[1.00,.97,1.03,.98,1.02,.99],
-            width0:100, width1:30, pops:.35, hdr:[.0041,.0044], coll:.0115, muff:.0052, drive:1.8, intake:.4 },
-      mix:{ body:5, bodyF:120, raspBase:0, raspMax:2, lpBase:1400, lpRpm:.45, lpLoad:2200, intake:.5, ex:3.0 }
-    }
-  };
-  let E = ENGINES.v10;
-  const torque = r => { const T = E.tq; for (let i=1;i<T.length;i++){ if (r<=T[i][0]) { const [x0,y0]=T[i-1],[x1,y1]=T[i]; return y0+(y1-y0)*(r-x0)/(x1-x0);} } return T[T.length-1][1]; };
-  const rpmFromV = (v,g) => v/CIRC*60*RATIOS[g-1]*FINAL;
   const clamp = (x,a,b) => Math.min(b,Math.max(a,x));
-  const driveAccel = (thr,rpm,g) => Math.min(6.8, thr*E.accel*torque(rpm)*(E.turbo ? .5+.5*S.boost : 1)*(RATIOS[g-1]/RATIOS[0]));
+  const interp = (c, x) => {
+    if (x <= c[0][0]) return c[0][1];
+    for (let i=1;i<c.length;i++) if (x <= c[i][0]) { const [x0,y0]=c[i-1],[x1,y1]=c[i]; return y0+(y1-y0)*(x-x0)/(x1-x0); }
+    return c[c.length-1][1];
+  };
+  const rpmFromV = (v,g) => v/CIRC*60*RATIOS[g-1]*FINAL;
 
+  const ENGINES = new Map();
+  let E = null;
   const S = { mode:'sim', running:false, starting:0, rpm:0, v:0, gear:1, thr:0, eff:0, a:0,
               shiftT:0, lastShift:-9, blipT:0, cut:false, brake:false, padThr:0, keyThr:0,
               boost:0, bovArmed:false, lastBov:-9 };
+  const torque = r => interp(E.tq, r);
+  const driveAccel = (thr,rpm,g) => Math.min(6.8, thr*E.accel*torque(rpm)*(E.turbo ? .5+.5*S.boost : 1)*(RATIOS[g-1]/RATIOS[0]));
 
-  document.getElementById('ratios').innerHTML =
-    RATIOS.map((r,i)=>`<span>${i+1}. gir ${r.toFixed(3).replace('.',',')}</span>`).join('');
+  $('ratios').innerHTML = RATIOS.map((r,i)=>`<span>${i+1}. gir ${r.toFixed(3).replace('.',',')}</span>`).join('');
+
+  // ---------- Motorformat ----------
+  // Se README for feltene. Filene valideres og gjøres om til ferdige parametre før lyden bruker dem.
+  function validCurve(c){
+    return Array.isArray(c) && c.length >= 2 && c.every((pt,i) =>
+      Array.isArray(pt) && pt.length === 2 && pt.every(v => typeof v === 'number' && isFinite(v)) && (i === 0 || pt[0] > c[i-1][0]));
+  }
+  function validateEngine(j){
+    const p = [], num = v => typeof v === 'number' && isFinite(v);
+    if (!j || typeof j !== 'object' || Array.isArray(j)) return ['Filen inneholder ikke et motorobjekt.'];
+    if (j.format !== 1) p.push('format må være 1.');
+    if (typeof j.id !== 'string' || !/^[a-z0-9-]{1,40}$/.test(j.id)) p.push('id må bestå av små bokstaver, tall og bindestrek.');
+    if (typeof j.name !== 'string' || !j.name.trim() || j.name.length > 40) p.push('name må være en tekst på 1–40 tegn.');
+    const c = j.cylinders || {};
+    if (c.cycleDeg !== 360 && c.cycleDeg !== 720) p.push('cylinders.cycleDeg må være 360 eller 720.');
+    if (!Array.isArray(c.firingDeg) || c.firingDeg.length < 1 || c.firingDeg.length > 16) p.push('cylinders.firingDeg må ha 1–16 vinkler.');
+    else {
+      if (c.firingDeg.some((a,i) => !num(a) || a < 0 || a >= c.cycleDeg || (i > 0 && a <= c.firingDeg[i-1]))) p.push('cylinders.firingDeg må stige og ligge fra 0 til under cycleDeg.');
+      if (!Array.isArray(c.bank) || c.bank.length !== c.firingDeg.length || c.bank.some(b => b !== 0 && b !== 1)) p.push('cylinders.bank må ha én verdi, 0 eller 1, per tenning.');
+    }
+    if (c.imbalance != null && (!num(c.imbalance) || c.imbalance < 0 || c.imbalance > .5)) p.push('cylinders.imbalance må være mellom 0 og 0,5.');
+    if (c.bankGain != null && (!Array.isArray(c.bankGain) || c.bankGain.length !== 2 || c.bankGain.some(v => !num(v) || v < 0 || v > 2))) p.push('cylinders.bankGain må være to tall mellom 0 og 2.');
+    const r = j.rpm || {};
+    if (!num(r.idle) || r.idle < 200) p.push('rpm.idle må være minst 200.');
+    if (!num(r.redline) || r.redline < (r.idle || 0)*1.5 || r.redline > 20000) p.push('rpm.redline må være godt over tomgang og under 20000.');
+    if (r.max != null && (!num(r.max) || r.max < r.redline || r.max > 22000)) p.push('rpm.max må være minst like høy som redline.');
+    const pw = j.power || {};
+    if (!num(pw.accel) || pw.accel <= 0 || pw.accel > 15) p.push('power.accel må være mellom 0 og 15.');
+    if (!validCurve(pw.torque)) p.push('power.torque må være en liste med [o/min, verdi] i stigende rekkefølge.');
+    const pu = j.pulse || {};
+    if (pu.widthDeg != null && (!Array.isArray(pu.widthDeg) || pu.widthDeg.length !== 2 || pu.widthDeg.some(v => !num(v) || v < 5 || v > 300))) p.push('pulse.widthDeg må være to vinkler mellom 5 og 300.');
+    if (pu.noise != null && (!Array.isArray(pu.noise) || pu.noise.length !== 2 || pu.noise.some(v => !num(v) || v < 0 || v > 2))) p.push('pulse.noise må være to tall mellom 0 og 2.');
+    const ex = j.exhaust || {};
+    if (!Array.isArray(ex.headerMs) || ex.headerMs.length !== 2 || ex.headerMs.some(v => !num(v) || v < .5 || v > 30)) p.push('exhaust.headerMs må være to verdier mellom 0,5 og 30.');
+    for (const k of ['collectorMs','mufflerMs']) if (!num(ex[k]) || ex[k] < .5 || ex[k] > 40) p.push(`exhaust.${k} må være mellom 0,5 og 40.`);
+    for (const k of ['headerReflect','collectorReflect','mufflerReflect']) if (ex[k] != null && (!num(ex[k]) || Math.abs(ex[k]) >= .95)) p.push(`exhaust.${k} må være mellom -0,95 og 0,95.`);
+    if (ex.drive != null && (!num(ex.drive) || ex.drive < 0 || ex.drive > 8)) p.push('exhaust.drive må være mellom 0 og 8.');
+    if (ex.pops != null && (!num(ex.pops) || ex.pops < 0 || ex.pops > 4)) p.push('exhaust.pops må være mellom 0 og 4.');
+    if (ex.resonances != null) {
+      if (!Array.isArray(ex.resonances) || ex.resonances.length > 4) p.push('exhaust.resonances kan ha maks 4 filtre.');
+      else ex.resonances.forEach((f,i) => {
+        const db = Array.isArray(f.db) ? f.db : [f.db];
+        if (!num(f.hz) || f.hz < 20 || f.hz > 16000 || !num(f.q) || f.q < .1 || f.q > 20 || db.length > 2 || db.some(d => !num(d) || Math.abs(d) > 24))
+          p.push(`exhaust.resonances[${i}] må ha hz 20–16000, q 0,1–20 og db mellom -24 og 24.`);
+      });
+    }
+    if (j.orders != null) {
+      if (!Array.isArray(j.orders) || j.orders.length > 6) p.push('orders kan ha maks 6 deltoner.');
+      else j.orders.forEach((o,i) => { if (!num(o.order) || o.order <= 0 || o.order > 40 || !validCurve(o.gain)) p.push(`orders[${i}] må ha order over 0 og en gain-kurve.`); });
+    }
+    const it = j.intake || {};
+    for (const k of ['gain','pulses']) if (it[k] != null && (!num(it[k]) || it[k] < 0 || it[k] > 4)) p.push(`intake.${k} må være mellom 0 og 4.`);
+    const mx = j.mix || {};
+    if (mx.exhaust != null && (!num(mx.exhaust) || mx.exhaust < 0 || mx.exhaust > 8)) p.push('mix.exhaust må være mellom 0 og 8.');
+    if (mx.lowpass != null && (!Array.isArray(mx.lowpass) || mx.lowpass.length !== 3 || mx.lowpass.some(v => !num(v) || v < 0))) p.push('mix.lowpass må være [grunnfrekvens, per o/min, per gass].');
+    if (j.turbo != null) {
+      const t = j.turbo;
+      if (!num(t.spoolSec) || t.spoolSec <= 0 || t.spoolSec > 10 || !num(t.maxBar) || t.maxBar <= 0 || t.maxBar > 5 ||
+          !Array.isArray(t.whistleHz) || t.whistleHz.length !== 2 || t.whistleHz.some(v => !num(v) || v < 100 || v > 16000))
+        p.push('turbo må ha spoolSec, maxBar og whistleHz [lav, høy].');
+    }
+    return p;
+  }
+  function hashStr(s){ let h = 2166136261 >>> 0; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h || 1; }
+  function compileEngine(j, source){
+    const c = j.cylinders, n = c.firingDeg.length, imb = c.imbalance ?? .05, bg = c.bankGain || [1,1];
+    let seed = hashStr(j.id);
+    const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+    const amp = c.firingDeg.map((_,i) => (1 + (rnd()*2-1)*imb) * bg[c.bank[i]]);
+    const pu = j.pulse || {}, ex = j.exhaust, mx = j.mix || {}, it = j.intake || {}, t = j.turbo;
+    const w = pu.widthDeg || [72, 38], nz = pu.noise || [.12, .42];
+    return {
+      id: j.id, name: j.name, description: j.description || '', eyebrow: j.eyebrow || `Syntetisk ${j.name}`, about: j.about || '', source,
+      idle: j.rpm.idle, redline: j.rpm.redline, maxRpm: j.rpm.max || Math.ceil(j.rpm.redline*1.1/1000)*1000,
+      accel: j.power.accel, tq: j.power.torque, firesPerRev: n / (c.cycleDeg/360),
+      turbo: t ? { spool: t.spoolSec, drop: t.dropSec || .3, maxBar: t.maxBar,
+                   start: t.startRpm || j.rpm.idle*1.9, full: t.fullRpm || j.rpm.redline*.57,
+                   wLo: t.whistleHz[0], wHi: t.whistleHz[1], whistle: t.whistle ?? 1, blowoff: t.blowoff ?? 1 } : null,
+      dsp: { firing: c.firingDeg, bank: c.bank, cycle: c.cycleDeg, amp,
+             w0: w[0], w1: w[0]-w[1], n0: nz[0], n1: nz[1]-nz[0], pops: ex.pops ?? 1,
+             hdr: [ex.headerMs[0]/1000, ex.headerMs[1]/1000], hdrG: ex.headerReflect ?? -.58,
+             coll: ex.collectorMs/1000, collG: ex.collectorReflect ?? .38,
+             muff: ex.mufflerMs/1000, muffG: ex.mufflerReflect ?? -.3, drive: ex.drive ?? 2.6, intake: it.pulses ?? 1 },
+      res: (ex.resonances || []).map(f => ({ hz: f.hz, q: f.q, db0: Array.isArray(f.db) ? f.db[0] : f.db, db1: Array.isArray(f.db) ? f.db[f.db.length-1] : f.db })),
+      lp: mx.lowpass || [2200, .7, 3500], exGain: mx.exhaust ?? 2.6, intakeGain: it.gain ?? 1, orders: j.orders || []
+    };
+  }
 
   // ---------- Lyd ----------
-  // Fysisk inspirert motorlyd: eksospulser per sylinder i V10-tenningsrekkefølgen,
-  // to grenrør, samlerør og lyddemper som bølgeledere, pluss innsug fra individuelle gasspjeld.
+  // Eksospulser per tenning ved fritt valgte vinkler, to grenrør, samlerør og lyddemper som bølgeledere,
+  // pluss innsugspulser. Kjører i en AudioWorklet, eller i en ScriptProcessor der worklet ikke er tilgjengelig.
 function makeEngineDSP(sr, cfg) {
-  // Standard: V10, 90° V, 72° jevn tenning, rekkefølge 1-6-5-10-2-7-3-8-4-9, rekke A = 1-5, rekke B = 6-10
   cfg = cfg || {};
-  var ORDER = cfg.order || [1, 6, 5, 10, 2, 7, 3, 8, 4, 9];
-  var CYL = cfg.cylVar || [1.00, 0.93, 1.06, 0.97, 1.03, 0.95, 1.07, 0.99, 0.92, 1.05];
-  var NC = ORDER.length, STEP = 720 / NC, SPLIT = cfg.split || NC / 2;
-  var W0 = cfg.width0 || 72, W1 = cfg.width1 == null ? 34 : cfg.width1, POPS = cfg.pops == null ? 1 : cfg.pops;
-  var HDR = cfg.hdr || [0.0050, 0.0057], DRV = cfg.drive || 2.6, INT = cfg.intake == null ? 1 : cfg.intake;
-  var st = { rpm: 0, load: 0, on: 0, tRpm: 0, tLoad: 0, tOn: 0, cut: 0, deg: 0, next: 0, idx: 0, seed: 22695477, popReq: 0 };
+  var FIR = cfg.firing || [0, 72, 144, 216, 288, 360, 432, 504, 576, 648];
+  var BANK = cfg.bank || [0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
+  var CYC = cfg.cycle || 720, NC = FIR.length;
+  var AMP = cfg.amp || FIR.map(function () { return 1; });
+  var W0 = cfg.w0 || 72, W1 = cfg.w1 == null ? 34 : cfg.w1, N0 = cfg.n0 == null ? 0.12 : cfg.n0, N1 = cfg.n1 == null ? 0.3 : cfg.n1;
+  var POPS = cfg.pops == null ? 1 : cfg.pops, DRV = cfg.drive == null ? 2.6 : cfg.drive, INT = cfg.intake == null ? 1 : cfg.intake;
+  var HDR = cfg.hdr || [0.0050, 0.0057];
+  var HG = cfg.hdrG == null ? -0.58 : cfg.hdrG, CG = cfg.collG == null ? 0.38 : cfg.collG, MG = cfg.muffG == null ? -0.3 : cfg.muffG;
+  var st = { rpm: 0, load: 0, on: 0, tRpm: 0, tLoad: 0, tOn: 0, cut: 0, deg: 0, base: 0, next: FIR[0], idx: 0, seed: 22695477, popReq: 0, stopped: true };
   var pulses = [];
   function DL(sec) { var n = Math.max(2, Math.round(sec * sr)); return { b: new Float32Array(n), i: 0, n: n, lp: 0 }; }
   var hdrA = DL(HDR[0]), hdrB = DL(HDR[1]), coll = DL(cfg.coll || 0.0092), muff = DL(cfg.muff || 0.0034), intk = DL(0.0021);
@@ -218,36 +303,38 @@ function makeEngineDSP(sr, cfg) {
     var o = x + g * d.lp; d.b[d.i] = o; d.i = (d.i + 1) % d.n; return o;
   }
   function fire() {
-    var rpm = Math.max(st.rpm, 250), load = st.load;
-    var cyl = ORDER[st.idx], bank = cyl <= SPLIT ? 0 : 1;
-    var amp = (0.22 + 0.78 * load) * CYL[cyl - 1] * (1 + (rnd() - 0.5) * 0.14);
-    var noise = 0.12 + 0.3 * load, width = W0 - W1 * load;
+    var rpm = Math.max(st.rpm, 250), load = st.load, ev = st.idx, bank = BANK[ev];
+    var amp = (0.22 + 0.78 * load) * AMP[ev] * (1 + (rnd() - 0.5) * 0.14);
+    var noise = N0 + N1 * load, width = W0 - W1 * load;
     if (st.popReq > 0) { st.popReq--; amp = 2.2; noise = 1.1; width = 120; }
     else if (st.cut) { amp *= 0.04; }
     else if (load < 0.08 && rpm > 2600) {
       var r = rnd();
       if (r < 0.035 * POPS * (rpm / 8000)) { amp = 1.9 + rnd(); noise = 1.2; width = 130; }   // smell i eksosen
-      else if (r < 0.3) { amp *= 0.12; }                                                  // feiltenning
+      else if (r < 0.3) { amp *= 0.12; }                                                         // feiltenning
       else { amp *= 0.55; }
     }
     var len = Math.max(10, width / 360 * 60 / rpm * sr);
     pulses.push({ t: 0, len: len, amp: amp, bank: bank, noise: noise, kind: 0 });
-    // Innsug: bredere, mykere puls, sterk ved full gass
-    if (!st.cut) pulses.push({ t: -Math.round(len * 0.4), len: len * 1.7, amp: (0.1 + 0.9 * load) * CYL[cyl - 1] * INT, bank: bank, noise: 0.35, kind: 1 });
+    if (!st.cut && INT > 0) pulses.push({ t: -Math.round(len * 0.4), len: len * 1.7, amp: (0.1 + 0.9 * load) * AMP[ev] * INT, bank: bank, noise: 0.35, kind: 1 });
   }
   function process(out0, out1, n) {
     for (var k = 0; k < n; k++) {
       st.rpm += (st.tRpm - st.rpm) * kR;
       st.load += (st.tLoad - st.load) * kL;
       st.on += (st.tOn - st.on) * kO;
-      st.deg += st.rpm / 60 / sr * 360;
-      if (st.rpm > 120 && st.deg >= st.next) {
-        fire();
-        st.idx = (st.idx + 1) % NC;
-        st.next += STEP + (rnd() - 0.5) * (1.6 - st.load);
-      }
-      if (st.deg > 7200) { st.deg -= 7200; st.next -= 7200; }
-      if (st.rpm <= 120) { st.next = st.deg; }
+      if (st.rpm > 120) {
+        if (st.stopped) { st.stopped = false; st.base = st.deg - FIR[st.idx]; st.next = st.deg; }
+        st.deg += st.rpm / 60 / sr * 360;
+        var guard = 0;
+        while (st.deg >= st.next && guard++ < 4) {
+          fire();
+          st.idx++;
+          if (st.idx >= NC) { st.idx = 0; st.base += CYC; }
+          st.next = st.base + FIR[st.idx] + (rnd() - 0.5) * (1.6 - st.load);
+        }
+        if (st.base > 72000) { st.deg -= st.base; st.next -= st.base; st.base = 0; }
+      } else { st.stopped = true; }
 
       var eA = 0, eB = 0, inx = 0;
       for (var p = pulses.length - 1; p >= 0; p--) {
@@ -262,9 +349,9 @@ function makeEngineDSP(sr, cfg) {
         q.t++;
       }
       // Eksos: to grenrør -> samlerør -> lyddemper
-      var a = comb(hdrA, eA, -0.58, 0.5), b = comb(hdrB, eB, -0.58, 0.5);
-      var c = comb(coll, (a + b) * 0.7, 0.38, 0.35);
-      var m = comb(muff, c, -0.3, 0.7);
+      var a = comb(hdrA, eA, HG, 0.5), b = comb(hdrB, eB, HG, 0.5);
+      var c = comb(coll, (a + b) * 0.7, CG, 0.35);
+      var m = comb(muff, c, MG, 0.7);
       var drive = 1.1 + DRV * st.load;
       var y = Math.tanh(m * drive * 0.8) / Math.sqrt(drive);
       var o = y - dc[0] + 0.995 * dc[1]; dc[0] = y; dc[1] = o;
@@ -286,6 +373,7 @@ function makeEngineDSP(sr, cfg) {
 }
 
   let A = null;
+  const MAX_ORDERS = 6;
   async function initAudio(){
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
     const master = ctx.createGain(); master.gain.value = vol.value/100;
@@ -317,19 +405,26 @@ function makeEngineDSP(sr, cfg) {
     const split = ctx.createChannelSplitter(2);
     src.connect(split);
 
-    // Eksos-kjede
+    // Eksos: høypass -> motorens resonansfiltre -> lavpass -> nivå
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 32;
-    const body = ctx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = E.mix.bodyF; body.Q.value = .9; body.gain.value = E.mix.body;
-    const rasp = ctx.createBiquadFilter(); rasp.type = 'peaking'; rasp.frequency.value = 2700; rasp.Q.value = 1.1;
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .7;
-    const exG = ctx.createGain(); exG.gain.value = E.mix.ex;
-    split.connect(hp, 0); hp.connect(body).connect(rasp).connect(lp).connect(exG).connect(master);
+    const exG = ctx.createGain(); exG.gain.value = E.exGain;
+    split.connect(hp, 0); lp.connect(exG).connect(master);
 
     // Innsug: hyl som følger andre harmoniske av tenningsfrekvensen
     const ibp = ctx.createBiquadFilter(); ibp.type = 'bandpass'; ibp.Q.value = 1.4;
     const ilp = ctx.createBiquadFilter(); ilp.type = 'lowpass'; ilp.frequency.value = 6000;
     const inG = ctx.createGain(); inG.gain.value = 0;
     split.connect(ibp, 1); ibp.connect(ilp).connect(inG).connect(master);
+
+    // Deltoner: rene toner på faste multipler av veivakselfrekvensen
+    const ordOsc = [], ordG = [];
+    for (let i=0;i<MAX_ORDERS;i++){
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 50;
+      const g = ctx.createGain(); g.gain.value = 0;
+      o.connect(g).connect(master); o.start();
+      ordOsc.push(o); ordG.push(g);
+    }
 
     // Startmotor
     const starter = ctx.createOscillator(); starter.type = 'sawtooth'; starter.frequency.value = 160;
@@ -346,7 +441,6 @@ function makeEngineDSP(sr, cfg) {
     const whine3 = ctx.createOscillator(); whine3.type = 'triangle';
     const gW1 = ctx.createGain(), gW2 = ctx.createGain(), gW3 = ctx.createGain();
     gW1.gain.value = 1; gW2.gain.value = .45; gW3.gain.value = .18;
-    // Lett vibrato: turboakselen varierer litt i turtall med eksospulsene
     const lfo = ctx.createOscillator(); lfo.frequency.value = 6.5;
     const lfoG = ctx.createGain(); lfoG.gain.value = 14;
     lfo.connect(lfoG); [whine1, whine2, whine3].forEach(o => lfoG.connect(o.detune));
@@ -361,12 +455,27 @@ function makeEngineDSP(sr, cfg) {
     air.connect(airBp).connect(airG).connect(master);
     [whine1, whine2, whine3, lfo, air].forEach(o => o.start());
 
-    A = { ctx, master, send, body, exG, rasp, lp, ibp, inG, gStart, starter, nb, whine1, whine2, whine3, tG, airBp, airG };
+    A = { ctx, master, send, hp, lp, exG, exF: [], ibp, inG, ordOsc, ordG, gStart, starter, nb,
+          whine1, whine2, whine3, tG, airBp, airG };
+    buildExhaustFilters();
+  }
+
+  function buildExhaustFilters(){
+    if (!A) return;
+    A.hp.disconnect(); A.exF.forEach(f => f.disconnect());
+    A.exF = E.res.map(r => {
+      const f = A.ctx.createBiquadFilter(); f.type = 'peaking';
+      f.frequency.value = r.hz; f.Q.value = r.q; f.gain.value = r.db0; return f;
+    });
+    let node = A.hp;
+    for (const f of A.exF) { node.connect(f); node = f; }
+    node.connect(A.lp);
   }
 
   // Blåseventil: trykkluft slippes ut når gassen slippes med trykk i systemet
   function bov(strength){
-    if (!A) return;
+    if (!A || !E.turbo) return;
+    strength *= E.turbo.blowoff;
     const { ctx, nb, master } = A, t = ctx.currentTime, dur = .45 + strength*.25;
     const src = ctx.createBufferSource(); src.buffer = nb;
     const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
@@ -381,45 +490,50 @@ function makeEngineDSP(sr, cfg) {
 
   function applyEngineAudio(){
     if (!A) return;
-    const t = A.ctx.currentTime;
     A.send({ engine: E.dsp });
-    A.body.frequency.setTargetAtTime(E.mix.bodyF, t, .05);
-    A.body.gain.setTargetAtTime(E.mix.body, t, .05);
-    A.exG.gain.setTargetAtTime(E.mix.ex, t, .05);
+    buildExhaustFilters();
+    A.exG.gain.setTargetAtTime(E.exGain, A.ctx.currentTime, .05);
   }
 
   function updateAudio(){
-    if (!A) return;
-    const t = A.ctx.currentTime, r = Math.max(S.rpm, 1), M = E.mix, e = S.eff, hi = r/E.redline;
-    const f = r/60*E.dsp.order.length/2;
+    if (!A || !E) return;
+    const t = A.ctx.currentTime, r = Math.max(S.rpm, 1), e = S.eff, hi = r/E.redline;
+    const f = r/60*E.firesPerRev;
     const on = S.starting > 0 ? .25 : (S.running || S.rpm > 50) ? 1 : 0;
-    A.send({ rpm: S.rpm, load: e, on, cut: S.cut || S.shiftT > 0 });
-    A.rasp.gain.setTargetAtTime(M.raspBase + M.raspMax*e*hi, t, .05);
-    A.lp.frequency.setTargetAtTime(Math.min(14000, M.lpBase + r*M.lpRpm + e*M.lpLoad), t, .04);
+    const cut = S.cut || S.shiftT > 0;
+    A.send({ rpm: S.rpm, load: e, on, cut });
+    E.res.forEach((rs, i) => { if (rs.db0 !== rs.db1 && A.exF[i]) A.exF[i].gain.setTargetAtTime(rs.db0 + (rs.db1 - rs.db0)*e*hi, t, .05); });
+    A.lp.frequency.setTargetAtTime(Math.min(14000, E.lp[0] + r*E.lp[1] + e*E.lp[2]), t, .04);
     A.ibp.frequency.setTargetAtTime(Math.min(7000, f*2), t, .02);
-    A.inG.gain.setTargetAtTime(S.running ? (.15 + 1.3*e) * Math.pow(hi, 1.4) * M.intake : 0, t, .04);
+    A.inG.gain.setTargetAtTime(S.running ? (.15 + 1.3*e) * Math.pow(hi, 1.4) * E.intakeGain : 0, t, .04);
+    // Deltoner
+    const crank = r/60, nyq = A.ctx.sampleRate*.45;
+    const ordLevel = (on === 1 && S.rpm > 50) ? .12*(.55 + .45*e)*(cut ? .3 : 1) : 0;
+    for (let i=0;i<MAX_ORDERS;i++){
+      const o = E.orders[i], fr = o ? o.order*crank : 0;
+      if (o) A.ordOsc[i].frequency.setTargetAtTime(Math.max(1, Math.min(fr, nyq)), t, .015);
+      A.ordG[i].gain.setTargetAtTime(o && fr < nyq ? interp(o.gain, r)*ordLevel : 0, t, .03);
+    }
     // Turbo
-    const b = E.turbo ? S.boost : 0, w = 1700 + b*6000, wv = whistle.value/100;
+    const T = E.turbo, b = T ? S.boost : 0, w = T ? T.wLo + b*(T.wHi - T.wLo) : 1000, wv = T ? whistle.value/100*T.whistle : 0;
     A.whine1.frequency.setTargetAtTime(w, t, .03);
     A.whine2.frequency.setTargetAtTime(w*2.02, t, .03);
     A.whine3.frequency.setTargetAtTime(w*3.01, t, .03);
     A.tG.gain.setTargetAtTime(Math.pow(b, 1.4)*(.16 + .2*S.thr)*wv, t, .04);
     A.airBp.frequency.setTargetAtTime(400 + w*.4, t, .05);
     A.airG.gain.setTargetAtTime(b*(.03 + .08*S.thr)*wv, t, .05);
+    // Startmotor
     A.gStart.gain.setTargetAtTime(S.starting > 0 ? .1 : 0, t, .03);
     A.starter.frequency.setTargetAtTime(150 + Math.sin(t*38)*25, t, .01);
   }
   const pop = () => A?.send({ pop: 1 });
 
-
   // ---------- GPS og bevegelse ----------
   const G = { watch:null, vg:0, lastFix:null, ga:0, mot:0, hasMot:false, vEst:0 };
-  const $ = id => document.getElementById(id);
   const setSt = (id, cls, text) => { $(id).innerHTML = `<span class="dot ${cls}"></span>${text}`; };
 
   async function startSensors(){
     if (!window.isSecureContext) { $('gpsMsg').textContent = 'Siden må åpnes over HTTPS for at GPS og sensorer skal virke.'; }
-    // Bevegelse
     try {
       if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
         const p = await DeviceMotionEvent.requestPermission();
@@ -429,7 +543,6 @@ function makeEngineDSP(sr, cfg) {
       setSt('stMot','wait','Venter på data…');
       setTimeout(()=>{ if (!G.hasMot) setSt('stMot','err','Ingen data. Bruker bare GPS.'); }, 3000);
     } catch { setSt('stMot','err','Ikke tillatt. Bruker bare GPS.'); }
-    // Posisjon
     if (!navigator.geolocation) { setSt('stGps','err','Støttes ikke'); return; }
     setSt('stGps','wait','Venter på posisjon…');
     G.watch = navigator.geolocation.watchPosition(onFix, onGeoErr, { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
@@ -467,7 +580,7 @@ function makeEngineDSP(sr, cfg) {
   function onGeoErr(err){
     setSt('stGps','err', err.code === 1 ? 'Ikke tillatt' : 'Ingen posisjon');
     $('gpsMsg').textContent = err.code === 1
-      ? 'Posisjon er blokkert. Inne i Claude får siden aldri tilgang til GPS. Legg filen på en HTTPS-adresse og åpne den i mobilens nettleser, så virker denne modusen.'
+      ? 'Posisjon er blokkert. Inne i Claude får siden aldri tilgang til GPS. Åpne siden fra en HTTPS-adresse i mobilens nettleser, så virker denne modusen.'
       : 'Fikk ikke posisjon ennå. Sjekk at stedstjenester er på, og at du er utendørs.';
   }
 
@@ -483,7 +596,7 @@ function makeEngineDSP(sr, cfg) {
   }
 
   function step(dt, now){
-    // Gasspådrag
+    if (!E) return;
     let target = 0;
     if (S.mode === 'sim') {
       target = Math.max(S.padThr, S.keyThr);
@@ -512,9 +625,10 @@ function makeEngineDSP(sr, cfg) {
     S.eff = eff;
 
     // Turbo: trykket bygger seg opp med forsinkelse og faller raskt når gassen slippes
-    if (E.turbo && S.running) {
-      const tgt = clamp((S.rpm - 1400)/2600, 0, 1) * Math.pow(S.eff, .8);
-      S.boost += (tgt - S.boost) * Math.min(1, dt / (tgt > S.boost ? .75 : .3));
+    const T = E.turbo;
+    if (T && S.running) {
+      const tgt = clamp((S.rpm - T.start)/(T.full - T.start), 0, 1) * Math.pow(S.eff, .8);
+      S.boost += (tgt - S.boost) * Math.min(1, dt / (tgt > S.boost ? T.spool : T.drop));
       if (S.thr > .5 && S.boost > .3) S.bovArmed = true;
       if (S.bovArmed && S.thr < .2) {
         S.bovArmed = false;
@@ -547,7 +661,7 @@ function makeEngineDSP(sr, cfg) {
     if (S.starting > 0) {
       S.starting -= dt;
       S.rpm = 250 + Math.sin(now*40)*60;
-      if (S.starting <= 0) S.rpm = 1700;
+      if (S.starting <= 0) S.rpm = E.idle*1.9;
     } else {
       let tgt = 0;
       if (S.running) {
@@ -579,7 +693,8 @@ function makeEngineDSP(sr, cfg) {
     W = r.width; cv.width = Math.round(r.width*dpr); cv.height = Math.round(r.width*dpr);
     cx2.setTransform(dpr,0,0,dpr,0,0);
   }
-  const A0 = Math.PI*.75, SW = Math.PI*1.5, ang = r => A0 + clamp(r,0,E.maxRpm)/E.maxRpm*SW;
+  const A0 = Math.PI*.75, SW = Math.PI*1.5;
+  const ang = r => A0 + clamp(r,0,E.maxRpm)/E.maxRpm*SW;
   function drawTach(){
     const c = cx2, w = W, cx = w/2, cy = w/2, R = w*.44;
     c.clearRect(0,0,w,w);
@@ -588,21 +703,20 @@ function makeEngineDSP(sr, cfg) {
     c.beginPath(); c.arc(cx,cy,R,A0,A0+SW); c.stroke();
     c.lineWidth = w*.03; c.strokeStyle = col.red;
     c.beginPath(); c.arc(cx,cy,R-w*.009,ang(E.redline),ang(E.maxRpm)); c.stroke();
-    // aktiv bue
     c.lineWidth = w*.012; c.strokeStyle = S.rpm >= E.redline-200 ? col.red : col.amber;
     c.shadowColor = c.strokeStyle; c.shadowBlur = 10;
     c.beginPath(); c.arc(cx,cy,R,A0,ang(S.rpm)); c.stroke(); c.shadowBlur = 0;
-    // streker og tall
     c.font = `600 ${Math.round(w*.062)}px "Saira Condensed","Arial Narrow",sans-serif`;
     c.textAlign = 'center'; c.textBaseline = 'middle';
-    for (let r=0; r<=E.maxRpm; r+=250){
+    const stepRpm = E.maxRpm > 12000 ? 500 : 250;
+    for (let r=0; r<=E.maxRpm; r+=stepRpm){
       const a = ang(r), major = r%1000===0, mid = r%500===0;
       const len = major ? w*.055 : mid ? w*.035 : w*.018;
       const r1 = R - w*.03, r2 = r1 - len;
       c.strokeStyle = r >= E.redline ? col.red : (major ? col.fg : col.muted);
       c.lineWidth = major ? 2.4 : 1.2;
       c.beginPath(); c.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1); c.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2); c.stroke();
-      if (major){
+      if (major && (E.maxRpm <= 12000 || r%2000===0)){
         const rt = r2 - w*.05;
         c.fillStyle = r >= E.redline ? col.red : col.fg;
         c.fillText(String(r/1000), cx+Math.cos(a)*rt, cy+Math.sin(a)*rt);
@@ -610,7 +724,6 @@ function makeEngineDSP(sr, cfg) {
     }
     c.fillStyle = col.muted; c.font = `500 ${Math.round(w*.03)}px Barlow,system-ui,sans-serif`;
     c.fillText('× 1000 o/min', cx, cy - R*.5);
-    // nål
     const a = ang(S.rpm);
     c.strokeStyle = col.amber; c.lineWidth = w*.011; c.lineCap = 'round';
     c.shadowColor = col.amber; c.shadowBlur = 12;
@@ -620,6 +733,7 @@ function makeEngineDSP(sr, cfg) {
 
   const leds = [...document.querySelectorAll('#lights i')];
   function drawUI(now){
+    if (!E) return;
     drawTach();
     const r = S.rpm, n = clamp(Math.floor((r - E.redline*.68)/(E.redline*.027))+1, 0, 10), flash = r >= E.redline - 350 && ((now*10)|0)%2===0;
     leds.forEach((el,i)=>{ el.className = flash ? 'b' : (i < n ? (i<4?'g':i<7?'a':'r') : ''); });
@@ -628,7 +742,7 @@ function makeEngineDSP(sr, cfg) {
     $('rpm').textContent = Math.round(r/10)*10;
     $('thr').textContent = Math.round(S.thr*100) + ' %';
     $('g').textContent = (S.a/9.81).toFixed(2).replace('.',',');
-    $('hz').textContent = E.turbo ? (S.boost*1.2).toFixed(1).replace('.',',') + ' bar' : Math.round(r/60*E.dsp.order.length/2) + ' Hz';
+    $('hz').textContent = E.turbo ? (S.boost*E.turbo.maxBar).toFixed(1).replace('.',',') + ' bar' : Math.round(r/60*E.firesPerRev) + ' Hz';
     $('gasFill').style.height = (S.padThr*100) + '%';
     $('gas').setAttribute('aria-valuenow', Math.round(S.padThr*100));
   }
@@ -647,6 +761,7 @@ function makeEngineDSP(sr, cfg) {
 
   let wake = null;
   $('start').addEventListener('click', async () => {
+    if (!E) return;
     if (!A) await initAudio();
     if (A.ctx.state === 'suspended') await A.ctx.resume();
     if (!S.running) {
@@ -702,33 +817,94 @@ function makeEngineDSP(sr, cfg) {
     if (document.visibilityState === 'visible' && S.running) { try { wake = await navigator.wakeLock?.request('screen'); } catch {} }
   });
 
-  // ---------- Motorvalg ----------
-  const engBtns = [...document.querySelectorAll('.eng')];
-  function selectEngine(key){
-    if (!ENGINES[key]) return;
-    E = ENGINES[key];
-    engBtns.forEach(b => b.setAttribute('aria-checked', b.dataset.engine === key));
+  // ---------- Motorvalg og import ----------
+  const CUSTOM_KEY = 'carsound-custom-engines', SEL_KEY = 'motorlyd-engine';
+  function engMsg(text, isErr){
+    const m = $('engMsg'); m.textContent = text; m.classList.toggle('err', !!isErr); m.hidden = !text;
+  }
+  function renderEngineButtons(){
+    const box = $('engines'); box.textContent = '';
+    for (const eng of ENGINES.values()) {
+      const b = document.createElement('button');
+      b.className = 'eng'; b.type = 'button'; b.setAttribute('role', 'radio');
+      b.dataset.engine = eng.id; b.setAttribute('aria-checked', E && E.id === eng.id);
+      const t = document.createElement('b'); t.textContent = eng.name;
+      const d = document.createElement('span'); d.textContent = eng.description + (eng.source === 'custom' ? ' · importert' : '');
+      b.append(t, d);
+      b.addEventListener('click', () => selectEngine(eng.id));
+      b.addEventListener('keydown', e => {
+        if (!['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key)) return;
+        e.preventDefault(); e.stopPropagation();
+        const all = [...box.querySelectorAll('.eng')], i = all.indexOf(b);
+        const nxt = all[(i + (e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : all.length - 1)) % all.length];
+        nxt.focus(); selectEngine(nxt.dataset.engine);
+      });
+      box.append(b);
+    }
+  }
+  function selectEngine(id){
+    const eng = ENGINES.get(id);
+    if (!eng) return;
+    E = eng;
+    document.querySelectorAll('.eng').forEach(b => b.setAttribute('aria-checked', b.dataset.engine === id));
     $('eyebrow').textContent = E.eyebrow;
-    $('h1').innerHTML = `${E.label} <span>Motorlyd</span>`;
+    const h = $('h1'); h.textContent = E.name + ' ';
+    const sp = document.createElement('span'); sp.textContent = 'Motorlyd'; h.append(sp);
+    $('engineAbout').textContent = E.about;
     $('hzLabel').textContent = E.turbo ? 'Boost' : 'Tenning';
     $('whistleRow').hidden = !E.turbo;
     S.rpm = Math.min(S.rpm, E.redline); S.boost = 0; S.bovArmed = false;
     applyEngineAudio();
-    try { localStorage.setItem('motorlyd-engine', key); } catch {}
+    try { localStorage.setItem(SEL_KEY, id); } catch {}
   }
-  engBtns.forEach(b => {
-    b.addEventListener('click', () => selectEngine(b.dataset.engine));
-    b.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault(); e.stopPropagation();
-        const i = (engBtns.indexOf(b) + 1) % engBtns.length;
-        engBtns[i].focus(); selectEngine(engBtns[i].dataset.engine);
-      }
-    });
+  async function loadBuiltIn(){
+    const res = await fetch('engines/manifest.json', { cache: 'no-cache' });
+    if (!res.ok) throw new Error('manifest');
+    const man = await res.json();
+    for (const file of man.engines || []) {
+      try {
+        const j = await (await fetch('engines/' + file, { cache: 'no-cache' })).json();
+        const p = validateEngine(j);
+        if (p.length) console.warn(file, p); else ENGINES.set(j.id, compileEngine(j, 'builtin'));
+      } catch (err) { console.warn(file, err); }
+    }
+  }
+  function loadCustom(){
+    try {
+      const arr = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]');
+      for (const j of arr) if (!validateEngine(j).length) ENGINES.set(j.id, compileEngine(j, 'custom'));
+    } catch {}
+  }
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', async e => {
+    const file = e.target.files[0]; e.target.value = '';
+    if (!file) return;
+    let j;
+    try { j = JSON.parse(await file.text()); } catch { return engMsg('Filen er ikke gyldig JSON.', true); }
+    const p = validateEngine(j);
+    if (p.length) return engMsg('Motoren ble ikke lagt til. ' + p.join(' '), true);
+    ENGINES.set(j.id, compileEngine(j, 'custom'));
+    try {
+      const arr = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]').filter(x => x && x.id !== j.id);
+      arr.push(j); localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr));
+    } catch {}
+    renderEngineButtons(); selectEngine(j.id);
+    engMsg(`${j.name} er lagt til.`);
   });
-  try { const k = localStorage.getItem('motorlyd-engine'); if (k) selectEngine(k); } catch {}
+
+  async function boot(){
+    try { await loadBuiltIn(); }
+    catch { engMsg('Fant ikke motorfilene i engines/. Siden må åpnes fra en webserver, for eksempel GitHub Pages.', true); }
+    loadCustom();
+    if (!ENGINES.size) { $('eyebrow').textContent = 'Ingen motorer lastet'; return; }
+    let saved = null; try { saved = localStorage.getItem(SEL_KEY); } catch {}
+    E = ENGINES.get(saved) || ENGINES.values().next().value;
+    renderEngineButtons(); selectEngine(E.id);
+    $('start').disabled = false;
+  }
 
   sizeCanvas(); window.addEventListener('resize', sizeCanvas);
+  boot();
   requestAnimationFrame(loop);
 })();
 </script>

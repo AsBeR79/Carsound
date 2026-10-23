@@ -1,0 +1,157 @@
+{
+  "format": 1,
+  "id": "v10",
+  "name": "V10",
+  "description": "Atmosfærisk · 8250 o/min",
+  "eyebrow": "Syntetisk V10 · 10 sylindre · rødt felt 8250 o/min",
+  "about": "Ti sylindre i 90 graders V med jevn tenning hver 72. grad i rekkefølgen 1-6-5-10-2-7-3-8-4-9. Grunntonen er o/min ÷ 60 × 5, altså 688 Hz ved 8250 o/min. Rekkene har litt ulik rørlengde, som gir den knurrende undertonen, og innsuget fra ti gasspjeld gir hylet ved full gass.",
+  "cylinders": {
+    "cycleDeg": 720,
+    "firingDeg": [
+      0,
+      72,
+      144,
+      216,
+      288,
+      360,
+      432,
+      504,
+      576,
+      648
+    ],
+    "bank": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    "imbalance": 0.06
+  },
+  "rpm": {
+    "idle": 900,
+    "redline": 8250,
+    "max": 9000
+  },
+  "power": {
+    "accel": 5.4,
+    "torque": [
+      [
+        0,
+        0.5
+      ],
+      [
+        1000,
+        0.62
+      ],
+      [
+        2000,
+        0.75
+      ],
+      [
+        4000,
+        0.88
+      ],
+      [
+        6100,
+        1
+      ],
+      [
+        7750,
+        0.93
+      ],
+      [
+        8250,
+        0.86
+      ],
+      [
+        9000,
+        0.6
+      ]
+    ]
+  },
+  "pulse": {
+    "widthDeg": [
+      72,
+      38
+    ],
+    "noise": [
+      0.12,
+      0.42
+    ]
+  },
+  "exhaust": {
+    "headerMs": [
+      5.0,
+      5.7
+    ],
+    "headerReflect": -0.58,
+    "collectorMs": 9.2,
+    "collectorReflect": 0.38,
+    "mufflerMs": 3.4,
+    "mufflerReflect": -0.3,
+    "drive": 2.6,
+    "pops": 1,
+    "resonances": [
+      {
+        "hz": 150,
+        "q": 0.9,
+        "db": 4
+      },
+      {
+        "hz": 2700,
+        "q": 1.1,
+        "db": [
+          2,
+          8
+        ]
+      }
+    ]
+  },
+  "orders": [
+    {
+      "order": 5,
+      "gain": [
+        [
+          900,
+          0.12
+        ],
+        [
+          8250,
+          0.3
+        ]
+      ]
+    },
+    {
+      "order": 10,
+      "gain": [
+        [
+          900,
+          0.04
+        ],
+        [
+          8250,
+          0.16
+        ]
+      ]
+    }
+  ],
+  "intake": {
+    "gain": 1.6,
+    "pulses": 1
+  },
+  "mix": {
+    "exhaust": 2.6,
+    "lowpass": [
+      2200,
+      0.7,
+      3500
+    ]
+  },
+  "turbo": null
+}

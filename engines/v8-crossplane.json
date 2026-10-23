@@ -1,0 +1,158 @@
+{
+  "format": 1,
+  "id": "v8-crossplane",
+  "name": "Kryssplan-V8",
+  "description": "Buldrende · 6500 o/min",
+  "eyebrow": "Syntetisk kryssplan-V8 · 8 sylindre · rødt felt 6500 o/min",
+  "about": "V8 med kryssplan-veivaksel og tenningsrekkefølge 1-8-4-3-6-5-7-2. Motoren tenner jevnt hver 90. grad, men hver sylinderrekke tenner ujevnt: venstre, høyre, høyre, venstre, høyre, venstre, venstre, høyre. Når de to rekkene går gjennom hvert sitt eksosrør, oppstår sterke halve ordener, særlig 2,5 ganger veivakselfrekvensen. Det er den typiske buldringen.",
+  "cylinders": {
+    "cycleDeg": 720,
+    "firingDeg": [
+      0,
+      90,
+      180,
+      270,
+      360,
+      450,
+      540,
+      630
+    ],
+    "bank": [
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "imbalance": 0.07,
+    "bankGain": [
+      1,
+      0.75
+    ]
+  },
+  "rpm": {
+    "idle": 650,
+    "redline": 6500,
+    "max": 7500
+  },
+  "power": {
+    "accel": 5.2,
+    "torque": [
+      [
+        0,
+        0.55
+      ],
+      [
+        1000,
+        0.7
+      ],
+      [
+        2500,
+        0.9
+      ],
+      [
+        4500,
+        1
+      ],
+      [
+        5800,
+        0.95
+      ],
+      [
+        6500,
+        0.85
+      ],
+      [
+        7500,
+        0.55
+      ]
+    ]
+  },
+  "pulse": {
+    "widthDeg": [
+      95,
+      55
+    ],
+    "noise": [
+      0.15,
+      0.45
+    ]
+  },
+  "exhaust": {
+    "headerMs": [
+      6.0,
+      7.9
+    ],
+    "headerReflect": -0.62,
+    "collectorMs": 12.5,
+    "collectorReflect": 0.42,
+    "mufflerMs": 4.6,
+    "mufflerReflect": -0.32,
+    "drive": 2.4,
+    "pops": 0.8,
+    "resonances": [
+      {
+        "hz": 105,
+        "q": 1.0,
+        "db": 6
+      },
+      {
+        "hz": 320,
+        "q": 1.5,
+        "db": 2
+      },
+      {
+        "hz": 1900,
+        "q": 1.2,
+        "db": [
+          0,
+          4
+        ]
+      }
+    ]
+  },
+  "orders": [
+    {
+      "order": 2,
+      "gain": [
+        [
+          650,
+          0.14
+        ],
+        [
+          6500,
+          0.14
+        ]
+      ]
+    },
+    {
+      "order": 4,
+      "gain": [
+        [
+          650,
+          0.14
+        ],
+        [
+          6500,
+          0.28
+        ]
+      ]
+    }
+  ],
+  "intake": {
+    "gain": 0.7,
+    "pulses": 0.6
+  },
+  "mix": {
+    "exhaust": 2.8,
+    "lowpass": [
+      1600,
+      0.6,
+      2800
+    ]
+  },
+  "turbo": null
+}

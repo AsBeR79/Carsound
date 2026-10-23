@@ -1,0 +1,7 @@
+{
+  "engines": [
+    "v10.json",
+    "r6t.json",
+    "v8-crossplane.json"
+  ]
+}

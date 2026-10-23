@@ -1,0 +1,148 @@
+{
+  "format": 1,
+  "id": "r6t",
+  "name": "Turbo R6",
+  "description": "Plystring · blåseventil",
+  "eyebrow": "Syntetisk turbo-R6 · 6 sylindre · 1,2 bar · rødt felt 7000 o/min",
+  "about": "Rekkesekser med tenning hver 120. grad i rekkefølgen 1-5-3-6-2-4, så grunntonen er o/min ÷ 60 × 3. Turbinen demper eksospulsene, så lyden blir rundere og dypere. Trykket bygger seg opp med forsinkelse, plystringen stiger i tone med trykket, og blåseventilen slipper ut luften når du slipper gassen med trykk i systemet.",
+  "cylinders": {
+    "cycleDeg": 720,
+    "firingDeg": [
+      0,
+      120,
+      240,
+      360,
+      480,
+      600
+    ],
+    "bank": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    "imbalance": 0.03
+  },
+  "rpm": {
+    "idle": 750,
+    "redline": 7000,
+    "max": 8000
+  },
+  "power": {
+    "accel": 5.6,
+    "torque": [
+      [
+        0,
+        0.45
+      ],
+      [
+        1000,
+        0.55
+      ],
+      [
+        1800,
+        0.95
+      ],
+      [
+        2500,
+        1
+      ],
+      [
+        5000,
+        1
+      ],
+      [
+        6500,
+        0.86
+      ],
+      [
+        7000,
+        0.78
+      ],
+      [
+        8000,
+        0.5
+      ]
+    ]
+  },
+  "pulse": {
+    "widthDeg": [
+      100,
+      70
+    ],
+    "noise": [
+      0.12,
+      0.42
+    ]
+  },
+  "exhaust": {
+    "headerMs": [
+      4.1,
+      4.4
+    ],
+    "headerReflect": -0.58,
+    "collectorMs": 11.5,
+    "collectorReflect": 0.38,
+    "mufflerMs": 5.2,
+    "mufflerReflect": -0.3,
+    "drive": 1.8,
+    "pops": 0.35,
+    "resonances": [
+      {
+        "hz": 120,
+        "q": 0.9,
+        "db": 5
+      },
+      {
+        "hz": 2700,
+        "q": 1.1,
+        "db": [
+          0,
+          2
+        ]
+      }
+    ]
+  },
+  "orders": [
+    {
+      "order": 3,
+      "gain": [
+        [
+          750,
+          0.1
+        ],
+        [
+          7000,
+          0.18
+        ]
+      ]
+    }
+  ],
+  "intake": {
+    "gain": 0.5,
+    "pulses": 0.4
+  },
+  "mix": {
+    "exhaust": 3.0,
+    "lowpass": [
+      1400,
+      0.45,
+      2200
+    ]
+  },
+  "turbo": {
+    "spoolSec": 0.75,
+    "dropSec": 0.3,
+    "maxBar": 1.2,
+    "startRpm": 1400,
+    "fullRpm": 4000,
+    "whistleHz": [
+      1700,
+      7700
+    ],
+    "whistle": 1,
+    "blowoff": 1
+  }
+}
