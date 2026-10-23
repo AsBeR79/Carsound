@@ -7,6 +7,7 @@ Syntetisk V10-motorlyd i nettleseren som følger farten og akselerasjonen til bi
 - **Simulator:** Hold inne gass-feltet (eller bruk ↑ / W og ↓ / mellomrom) for å teste uten å kjøre.
 - **Kjør med GPS:** Farten kommer fra telefonens GPS, og akselerometeret fyller inn mellom målingene slik at lyden reagerer med en gang.
 - **Lydmotor:** Eksospulser per sylinder i V10-tenningsrekkefølgen 1-6-5-10-2-7-3-8-4-9, to grenrør, samlerør og lyddemper simulert som rør med refleksjoner, pluss innsugshyl. Grunntonen er o/min ÷ 60 × 5.
+- **Turbo R6:** Rekkesekser (1-5-3-6-2-4) med forsinket trykkoppbygging, turboplystring som stiger med trykket og blåseventil når gassen slippes. Velg motor øverst på siden.
 - **Girkasse:** Simulert sjutrinns girkasse med tenningskutt ved oppgiring og smell i eksosen ved motorbrems.
 
 ## Kjøre siden

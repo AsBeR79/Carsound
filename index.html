@@ -78,14 +78,20 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
 .ratios{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-variant-numeric:tabular-nums}
 .ratios span{font-family:var(--display);background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
 .foot{font-size:13px;color:var(--muted);max-width:70ch}
+.engines{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.eng{text-align:left;font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.eng b{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.02em}
+.eng span{font-size:13px;color:var(--muted)}
+.eng[aria-checked="true"]{border-color:var(--amber);background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--amber)}
+.eng[aria-checked="true"] b{color:var(--amber)}
 @media (prefers-reduced-motion:reduce){.lights i{transition:none}}
 </style>
 
 <div class="app">
   <header class="top">
     <div>
-      <div class="eyebrow">Syntetisk V10 · 10 sylindre · rødt felt 8250 o/min</div>
-      <h1>V10 <span>Motorlyd</span></h1>
+      <div class="eyebrow" id="eyebrow">Syntetisk V10 · 10 sylindre · rødt felt 8250 o/min</div>
+      <h1 id="h1">V10 <span>Motorlyd</span></h1>
     </div>
     <div class="seg" role="tablist" aria-label="Modus">
       <button id="tabSim" role="tab" aria-selected="true">Simulator</button>
@@ -105,11 +111,15 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
         <div><dt>o/min</dt><dd id="rpm">0</dd></div>
         <div><dt>Gass</dt><dd id="thr">0 %</dd></div>
         <div><dt>G</dt><dd id="g">0,00</dd></div>
-        <div><dt>Tenning</dt><dd id="hz">0 Hz</dd></div>
+        <div><dt id="hzLabel">Tenning</dt><dd id="hz">0 Hz</dd></div>
       </dl>
     </section>
 
     <section class="controls">
+      <div class="engines" role="radiogroup" aria-label="Velg motor">
+        <button class="eng" role="radio" aria-checked="true" data-engine="v10" id="engV10"><b>V10</b><span>Atmosfærisk · 8250 o/min</span></button>
+        <button class="eng" role="radio" aria-checked="false" data-engine="r6t" id="engR6t"><b>Turbo R6</b><span>Plystring · blåseventil</span></button>
+      </div>
       <button class="start" id="start">Start motor</button>
 
       <div class="panel" id="simPanel">
@@ -138,6 +148,7 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
         <summary>Slik regnes lyden ut</summary>
         <p>Lyden er syntetisert i nettleseren, uten opptak. Hver sylinder sender en eksospuls i V10-rekkefølgen 1-6-5-10-2-7-3-8-4-9, med 72 graders avstand. Pulsene fra hver sylinderrekke går gjennom sitt eget grenrør, så videre til et samlerør og en lyddemper, som alle er simulert som rør med refleksjoner. Grunntonen blir o/min ÷ 60 × 5, altså 688 Hz ved 8250 o/min. At de to rekkene ikke er helt like, gir den knurrende undertonen. Innsuget fra de ti gasspjeldene gir hylet ved full gass og høyt turtall.</p>
         <p>Turtallet kommer fra farten og en simulert sjutrinns girkasse med slutteveksling 3,62 og et hjul med omkrets 2,13 m. Gasspådraget avgjør når den skifter opp og hvor rå lyden blir. Slipper du gassen på høyt turtall, gir feiltenninger og smell i eksosen den typiske knitringen. Ved oppgiring kuttes tenningen et øyeblikk, slik en sekvensiell girkasse gjør.</p>
+        <p>Turbo R6 tenner i rekkefølgen 1-5-3-6-2-4, én gang hver 120. grad, så grunntonen er o/min ÷ 60 × 3. Turbinen demper eksospulsene, så lyden blir rundere og dypere. Trykket bygger seg opp med forsinkelse når du gir gass, og plystringen stiger i tone etter hvert som turboen spinner opp. Slipper du gassen eller gir opp med trykk i systemet, åpner blåseventilen og slipper ut luften med et pust.</p>
         <div class="ratios" id="ratios"></div>
         <p>I GPS-modus kommer farten fra posisjonen omtrent én gang i sekundet. Akselerometeret fyller inn mellom målingene, slik at lyden reagerer med en gang du gir gass.</p>
       </details>
@@ -151,15 +162,34 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
 (() => {
   // ---------- Bilmodell ----------
   const RATIOS = [3.985, 2.652, 1.806, 1.392, 1.159, 1.0, 0.833];
-  const FINAL = 3.62, CIRC = 2.13, IDLE = 900, REDLINE = 8250, MAXRPM = 9000;
-  const TQ = [[0,.5],[1000,.62],[2000,.75],[4000,.88],[6100,1],[7750,.93],[8250,.86],[9000,.6]];
-  const torque = r => { for (let i=1;i<TQ.length;i++){ if (r<=TQ[i][0]) { const [x0,y0]=TQ[i-1],[x1,y1]=TQ[i]; return y0+(y1-y0)*(r-x0)/(x1-x0);} } return .6; };
+  const FINAL = 3.62, CIRC = 2.13;
+  const ENGINES = {
+    v10: {
+      label:'V10', eyebrow:'Syntetisk V10 · 10 sylindre · rødt felt 8250 o/min',
+      idle:900, redline:8250, maxRpm:9000, accel:5.4, turbo:false,
+      tq:[[0,.5],[1000,.62],[2000,.75],[4000,.88],[6100,1],[7750,.93],[8250,.86],[9000,.6]],
+      dsp:{ order:[1,6,5,10,2,7,3,8,4,9], split:5, cylVar:[1.00,.93,1.06,.97,1.03,.95,1.07,.99,.92,1.05],
+            width0:72, width1:34, pops:1, hdr:[.0050,.0057], coll:.0092, muff:.0034, drive:2.6, intake:1 },
+      mix:{ body:4, bodyF:150, raspBase:2, raspMax:6, lpBase:2200, lpRpm:.7, lpLoad:3500, intake:1.6, ex:2.6 }
+    },
+    r6t: {
+      label:'Turbo R6', eyebrow:'Syntetisk turbo-R6 · 6 sylindre · 1,2 bar · rødt felt 7000 o/min',
+      idle:750, redline:7000, maxRpm:8000, accel:5.6, turbo:true,
+      tq:[[0,.45],[1000,.55],[1800,.95],[2500,1],[5000,1],[6500,.86],[7000,.78],[8000,.5]],
+      dsp:{ order:[1,5,3,6,2,4], split:3, cylVar:[1.00,.97,1.03,.98,1.02,.99],
+            width0:100, width1:30, pops:.35, hdr:[.0041,.0044], coll:.0115, muff:.0052, drive:1.8, intake:.4 },
+      mix:{ body:5, bodyF:120, raspBase:0, raspMax:2, lpBase:1400, lpRpm:.45, lpLoad:2200, intake:.5, ex:3.0 }
+    }
+  };
+  let E = ENGINES.v10;
+  const torque = r => { const T = E.tq; for (let i=1;i<T.length;i++){ if (r<=T[i][0]) { const [x0,y0]=T[i-1],[x1,y1]=T[i]; return y0+(y1-y0)*(r-x0)/(x1-x0);} } return T[T.length-1][1]; };
   const rpmFromV = (v,g) => v/CIRC*60*RATIOS[g-1]*FINAL;
   const clamp = (x,a,b) => Math.min(b,Math.max(a,x));
-  const driveAccel = (thr,rpm,g) => Math.min(6.8, thr*5.4*torque(rpm)*(RATIOS[g-1]/RATIOS[0]));
+  const driveAccel = (thr,rpm,g) => Math.min(6.8, thr*E.accel*torque(rpm)*(E.turbo ? .5+.5*S.boost : 1)*(RATIOS[g-1]/RATIOS[0]));
 
   const S = { mode:'sim', running:false, starting:0, rpm:0, v:0, gear:1, thr:0, eff:0, a:0,
-              shiftT:0, lastShift:-9, blipT:0, cut:false, brake:false, padThr:0, keyThr:0 };
+              shiftT:0, lastShift:-9, blipT:0, cut:false, brake:false, padThr:0, keyThr:0,
+              boost:0, bovArmed:false, lastBov:-9 };
 
   document.getElementById('ratios').innerHTML =
     RATIOS.map((r,i)=>`<span>${i+1}. gir ${r.toFixed(3).replace('.',',')}</span>`).join('');
@@ -167,14 +197,18 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
   // ---------- Lyd ----------
   // Fysisk inspirert motorlyd: eksospulser per sylinder i V10-tenningsrekkefølgen,
   // to grenrør, samlerør og lyddemper som bølgeledere, pluss innsug fra individuelle gasspjeld.
-function makeEngineDSP(sr) {
-  // V10, 90° V, 72° jevn tenning. Rekkefølge 1-6-5-10-2-7-3-8-4-9, rekke A = 1-5, rekke B = 6-10
-  var ORDER = [1, 6, 5, 10, 2, 7, 3, 8, 4, 9];
-  var CYL = [1.00, 0.93, 1.06, 0.97, 1.03, 0.95, 1.07, 0.99, 0.92, 1.05];
+function makeEngineDSP(sr, cfg) {
+  // Standard: V10, 90° V, 72° jevn tenning, rekkefølge 1-6-5-10-2-7-3-8-4-9, rekke A = 1-5, rekke B = 6-10
+  cfg = cfg || {};
+  var ORDER = cfg.order || [1, 6, 5, 10, 2, 7, 3, 8, 4, 9];
+  var CYL = cfg.cylVar || [1.00, 0.93, 1.06, 0.97, 1.03, 0.95, 1.07, 0.99, 0.92, 1.05];
+  var NC = ORDER.length, STEP = 720 / NC, SPLIT = cfg.split || NC / 2;
+  var W0 = cfg.width0 || 72, W1 = cfg.width1 == null ? 34 : cfg.width1, POPS = cfg.pops == null ? 1 : cfg.pops;
+  var HDR = cfg.hdr || [0.0050, 0.0057], DRV = cfg.drive || 2.6, INT = cfg.intake == null ? 1 : cfg.intake;
   var st = { rpm: 0, load: 0, on: 0, tRpm: 0, tLoad: 0, tOn: 0, cut: 0, deg: 0, next: 0, idx: 0, seed: 22695477, popReq: 0 };
   var pulses = [];
   function DL(sec) { var n = Math.max(2, Math.round(sec * sr)); return { b: new Float32Array(n), i: 0, n: n, lp: 0 }; }
-  var hdrA = DL(0.0050), hdrB = DL(0.0057), coll = DL(0.0092), muff = DL(0.0034), intk = DL(0.0021);
+  var hdrA = DL(HDR[0]), hdrB = DL(HDR[1]), coll = DL(cfg.coll || 0.0092), muff = DL(cfg.muff || 0.0034), intk = DL(0.0021);
   var dc = [0, 0, 0, 0];
   var kR = 1 - Math.exp(-1 / (0.012 * sr)), kL = 1 - Math.exp(-1 / (0.02 * sr)), kO = 1 - Math.exp(-1 / (0.06 * sr));
   function rnd() { st.seed = (Math.imul(st.seed, 1664525) + 1013904223) >>> 0; return st.seed / 4294967296; }
@@ -184,21 +218,21 @@ function makeEngineDSP(sr) {
   }
   function fire() {
     var rpm = Math.max(st.rpm, 250), load = st.load;
-    var cyl = ORDER[st.idx], bank = cyl <= 5 ? 0 : 1;
+    var cyl = ORDER[st.idx], bank = cyl <= SPLIT ? 0 : 1;
     var amp = (0.22 + 0.78 * load) * CYL[cyl - 1] * (1 + (rnd() - 0.5) * 0.14);
-    var noise = 0.12 + 0.3 * load, width = 72 - 34 * load;
+    var noise = 0.12 + 0.3 * load, width = W0 - W1 * load;
     if (st.popReq > 0) { st.popReq--; amp = 2.2; noise = 1.1; width = 120; }
     else if (st.cut) { amp *= 0.04; }
     else if (load < 0.08 && rpm > 2600) {
       var r = rnd();
-      if (r < 0.035 * (rpm / 8000)) { amp = 1.9 + rnd(); noise = 1.2; width = 130; }   // smell i eksosen
+      if (r < 0.035 * POPS * (rpm / 8000)) { amp = 1.9 + rnd(); noise = 1.2; width = 130; }   // smell i eksosen
       else if (r < 0.3) { amp *= 0.12; }                                                  // feiltenning
       else { amp *= 0.55; }
     }
     var len = Math.max(10, width / 360 * 60 / rpm * sr);
     pulses.push({ t: 0, len: len, amp: amp, bank: bank, noise: noise, kind: 0 });
     // Innsug: bredere, mykere puls, sterk ved full gass
-    if (!st.cut) pulses.push({ t: -Math.round(len * 0.4), len: len * 1.7, amp: (0.1 + 0.9 * load) * CYL[cyl - 1], bank: bank, noise: 0.35, kind: 1 });
+    if (!st.cut) pulses.push({ t: -Math.round(len * 0.4), len: len * 1.7, amp: (0.1 + 0.9 * load) * CYL[cyl - 1] * INT, bank: bank, noise: 0.35, kind: 1 });
   }
   function process(out0, out1, n) {
     for (var k = 0; k < n; k++) {
@@ -208,8 +242,8 @@ function makeEngineDSP(sr) {
       st.deg += st.rpm / 60 / sr * 360;
       if (st.rpm > 120 && st.deg >= st.next) {
         fire();
-        st.idx = (st.idx + 1) % 10;
-        st.next += 72 + (rnd() - 0.5) * (1.6 - st.load);
+        st.idx = (st.idx + 1) % NC;
+        st.next += STEP + (rnd() - 0.5) * (1.6 - st.load);
       }
       if (st.deg > 7200) { st.deg -= 7200; st.next -= 7200; }
       if (st.rpm <= 120) { st.next = st.deg; }
@@ -230,7 +264,7 @@ function makeEngineDSP(sr) {
       var a = comb(hdrA, eA, -0.58, 0.5), b = comb(hdrB, eB, -0.58, 0.5);
       var c = comb(coll, (a + b) * 0.7, 0.38, 0.35);
       var m = comb(muff, c, -0.3, 0.7);
-      var drive = 1.1 + 2.6 * st.load;
+      var drive = 1.1 + DRV * st.load;
       var y = Math.tanh(m * drive * 0.8) / Math.sqrt(drive);
       var o = y - dc[0] + 0.995 * dc[1]; dc[0] = y; dc[1] = o;
       // Innsug: kort trompet-resonans
@@ -260,30 +294,34 @@ function makeEngineDSP(sr) {
     let src, send;
     try {
       const code = makeEngineDSP.toString() + `
-        class EngineV10 extends AudioWorkletProcessor {
-          constructor(){ super(); this.d = makeEngineDSP(sampleRate); this.port.onmessage = e => this.d.set(e.data); }
+        class EngineProc extends AudioWorkletProcessor {
+          constructor(opt){
+            super();
+            this.d = makeEngineDSP(sampleRate, opt && opt.processorOptions && opt.processorOptions.engine);
+            this.port.onmessage = e => { if (e.data.engine) this.d = makeEngineDSP(sampleRate, e.data.engine); else this.d.set(e.data); };
+          }
           process(_, out){ const o = out[0]; this.d.process(o[0], o[1], o[0].length); return true; }
         }
-        registerProcessor('engine-v10', EngineV10);`;
+        registerProcessor('engine-synth', EngineProc);`;
       const url = URL.createObjectURL(new Blob([code], { type:'application/javascript' }));
       await ctx.audioWorklet.addModule(url);
-      src = new AudioWorkletNode(ctx, 'engine-v10', { numberOfInputs:0, numberOfOutputs:1, outputChannelCount:[2] });
+      src = new AudioWorkletNode(ctx, 'engine-synth', { numberOfInputs:0, numberOfOutputs:1, outputChannelCount:[2], processorOptions:{ engine:E.dsp } });
       send = m => src.port.postMessage(m);
     } catch {
-      const dsp = makeEngineDSP(ctx.sampleRate);
+      let dsp = makeEngineDSP(ctx.sampleRate, E.dsp);
       src = ctx.createScriptProcessor(1024, 1, 2);
       src.onaudioprocess = e => { const b = e.outputBuffer; dsp.process(b.getChannelData(0), b.getChannelData(1), b.length); };
-      send = m => dsp.set(m);
+      send = m => { if (m.engine) dsp = makeEngineDSP(ctx.sampleRate, m.engine); else dsp.set(m); };
     }
     const split = ctx.createChannelSplitter(2);
     src.connect(split);
 
     // Eksos-kjede
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 32;
-    const body = ctx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 150; body.Q.value = .9; body.gain.value = 4;
+    const body = ctx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = E.mix.bodyF; body.Q.value = .9; body.gain.value = E.mix.body;
     const rasp = ctx.createBiquadFilter(); rasp.type = 'peaking'; rasp.frequency.value = 2700; rasp.Q.value = 1.1;
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .7;
-    const exG = ctx.createGain(); exG.gain.value = 2.6;
+    const exG = ctx.createGain(); exG.gain.value = E.mix.ex;
     split.connect(hp, 0); hp.connect(body).connect(rasp).connect(lp).connect(exG).connect(master);
 
     // Innsug: hyl som følger andre harmoniske av tenningsfrekvensen
@@ -299,18 +337,65 @@ function makeEngineDSP(sr) {
     starter.connect(stLp).connect(gStart).connect(master);
     starter.start();
 
-    A = { ctx, master, send, rasp, lp, ibp, inG, gStart, starter };
+    // Turbo: plystring fra kompressorhjulet og sus fra luftstrømmen
+    const nb = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate), nd = nb.getChannelData(0);
+    for (let i=0;i<nd.length;i++) nd[i] = Math.random()*2-1;
+    const whine1 = ctx.createOscillator(); whine1.type = 'sine';
+    const whine2 = ctx.createOscillator(); whine2.type = 'sine';
+    const gW1 = ctx.createGain(), gW2 = ctx.createGain(); gW1.gain.value = 1; gW2.gain.value = .3;
+    const tHp = ctx.createBiquadFilter(); tHp.type = 'highpass'; tHp.frequency.value = 1200;
+    const tG = ctx.createGain(); tG.gain.value = 0;
+    whine1.connect(gW1).connect(tHp); whine2.connect(gW2).connect(tHp); tHp.connect(tG).connect(master);
+    const air = ctx.createBufferSource(); air.buffer = nb; air.loop = true;
+    const airBp = ctx.createBiquadFilter(); airBp.type = 'bandpass'; airBp.Q.value = 2.5;
+    const airG = ctx.createGain(); airG.gain.value = 0;
+    air.connect(airBp).connect(airG).connect(master);
+    [whine1, whine2, air].forEach(o => o.start());
+
+    A = { ctx, master, send, body, exG, rasp, lp, ibp, inG, gStart, starter, nb, whine1, whine2, tG, airBp, airG };
+  }
+
+  // Blåseventil: trykkluft slippes ut når gassen slippes med trykk i systemet
+  function bov(strength){
+    if (!A) return;
+    const { ctx, nb, master } = A, t = ctx.currentTime, dur = .45 + strength*.25;
+    const src = ctx.createBufferSource(); src.buffer = nb;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
+    bp.frequency.setValueAtTime(3400, t); bp.frequency.exponentialRampToValueAtTime(900, t + dur);
+    const hs = ctx.createBiquadFilter(); hs.type = 'highshelf'; hs.frequency.value = 4000; hs.gain.value = 5;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.6*strength, t + .012);
+    g.gain.setTargetAtTime(.35*strength, t + .012, .08); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    src.connect(bp).connect(hs).connect(g).connect(master);
+    src.start(t, Math.random(), dur + .05);
+  }
+
+  function applyEngineAudio(){
+    if (!A) return;
+    const t = A.ctx.currentTime;
+    A.send({ engine: E.dsp });
+    A.body.frequency.setTargetAtTime(E.mix.bodyF, t, .05);
+    A.body.gain.setTargetAtTime(E.mix.body, t, .05);
+    A.exG.gain.setTargetAtTime(E.mix.ex, t, .05);
   }
 
   function updateAudio(){
     if (!A) return;
-    const t = A.ctx.currentTime, r = Math.max(S.rpm, 1), f = r/60*5, e = S.eff, hi = r/REDLINE;
+    const t = A.ctx.currentTime, r = Math.max(S.rpm, 1), M = E.mix, e = S.eff, hi = r/E.redline;
+    const f = r/60*E.dsp.order.length/2;
     const on = S.starting > 0 ? .25 : (S.running || S.rpm > 50) ? 1 : 0;
     A.send({ rpm: S.rpm, load: e, on, cut: S.cut || S.shiftT > 0 });
-    A.rasp.gain.setTargetAtTime(2 + 6*e*hi, t, .05);
-    A.lp.frequency.setTargetAtTime(Math.min(14000, 2200 + r*.7 + e*3500), t, .04);
+    A.rasp.gain.setTargetAtTime(M.raspBase + M.raspMax*e*hi, t, .05);
+    A.lp.frequency.setTargetAtTime(Math.min(14000, M.lpBase + r*M.lpRpm + e*M.lpLoad), t, .04);
     A.ibp.frequency.setTargetAtTime(Math.min(7000, f*2), t, .02);
-    A.inG.gain.setTargetAtTime(S.running ? (.15 + 1.3*e) * Math.pow(hi, 1.4) * 1.6 : 0, t, .04);
+    A.inG.gain.setTargetAtTime(S.running ? (.15 + 1.3*e) * Math.pow(hi, 1.4) * M.intake : 0, t, .04);
+    // Turbo
+    const b = E.turbo ? S.boost : 0, w = 1600 + b*5600;
+    A.whine1.frequency.setTargetAtTime(w, t, .03);
+    A.whine2.frequency.setTargetAtTime(w*2.02, t, .03);
+    A.tG.gain.setTargetAtTime(b*b*(.06 + .1*S.thr), t, .05);
+    A.airBp.frequency.setTargetAtTime(400 + w*.4, t, .05);
+    A.airG.gain.setTargetAtTime(b*(.015 + .05*S.thr), t, .05);
     A.gStart.gain.setTargetAtTime(S.starting > 0 ? .1 : 0, t, .03);
     A.starter.frequency.setTargetAtTime(150 + Math.sin(t*38)*25, t, .01);
   }
@@ -379,7 +464,11 @@ function makeEngineDSP(sr) {
   // ---------- Simulering ----------
   function shift(dir, now){
     S.gear += dir; S.lastShift = now;
-    if (dir > 0) { S.shiftT = .11; if (S.thr > .7 && Math.random() < .6) pop(); }
+    if (dir > 0) {
+      S.shiftT = .11;
+      if (E.turbo) { if (S.boost > .45) { bov(S.boost*.75); S.lastBov = now; } S.boost *= .65; }
+      else if (S.thr > .7 && Math.random() < .6) pop();
+    }
     else S.blipT = .18;
   }
 
@@ -396,7 +485,7 @@ function makeEngineDSP(sr) {
       G.vEst += (G.vg - G.vEst) * Math.min(1, dt*1.5);
       S.v = G.vEst; S.a = a;
       const need = a + .12 + .00016*S.v*S.v;
-      target = a > -.2 ? clamp(need / Math.max(.3, driveAccel(1, Math.max(S.rpm,IDLE), S.gear)), 0, 1) : 0;
+      target = a > -.2 ? clamp(need / Math.max(.3, driveAccel(1, Math.max(S.rpm,E.idle), S.gear)), 0, 1) : 0;
       if (Math.abs(a) < .2 && S.v > 3) target = Math.max(target, .12);
     }
     if (!S.running) target = 0;
@@ -408,9 +497,20 @@ function makeEngineDSP(sr) {
     if (S.blipT > 0) eff = Math.max(eff, .55);
 
     // Turtallssperre
-    S.cut = S.running && S.rpm >= REDLINE - 15 && S.thr > .4 && ((now*22)|0) % 2 === 0;
+    S.cut = S.running && S.rpm >= E.redline - 15 && S.thr > .4 && ((now*22)|0) % 2 === 0;
     if (S.cut) eff *= .1;
     S.eff = eff;
+
+    // Turbo: trykket bygger seg opp med forsinkelse og faller raskt når gassen slippes
+    if (E.turbo && S.running) {
+      const tgt = clamp((S.rpm - 1400)/2600, 0, 1) * Math.pow(S.eff, .8);
+      S.boost += (tgt - S.boost) * Math.min(1, dt / (tgt > S.boost ? .75 : .3));
+      if (S.thr > .5 && S.boost > .3) S.bovArmed = true;
+      if (S.bovArmed && S.thr < .2) {
+        S.bovArmed = false;
+        if (S.boost > .25 && now - S.lastBov > .5) { bov(Math.min(1, S.boost*1.1)); S.lastBov = now; }
+      }
+    } else { S.boost += (0 - S.boost) * Math.min(1, dt*4); S.bovArmed = false; }
 
     // Fysikk i simulator
     if (S.mode === 'sim') {
@@ -428,9 +528,9 @@ function makeEngineDSP(sr) {
     if (S.v < 1.5 && S.gear > 1) S.gear = 1;
     if (S.running && S.shiftT <= 0 && now - S.lastShift > .35) {
       const r = rpmFromV(S.v, S.gear);
-      const up = 4800 + S.thr*3300, down = 1400 + S.thr*2600;
+      const up = E.redline*(.58 + S.thr*.4), down = E.redline*(.17 + S.thr*.31);
       if (r > up && S.gear < 7) shift(1, now);
-      else if (S.gear > 1 && r < down && rpmFromV(S.v, S.gear-1) < 7700) shift(-1, now);
+      else if (S.gear > 1 && r < down && rpmFromV(S.v, S.gear-1) < E.redline - 550) shift(-1, now);
     }
 
     // Motorens turtall
@@ -444,16 +544,16 @@ function makeEngineDSP(sr) {
         const wheel = rpmFromV(S.v, S.gear);
         tgt = wheel;
         if (S.gear === 1 && S.v < 9) {
-          const launch = IDLE + S.thr*(4200 - IDLE), k = S.v/9;
+          const launch = E.idle + S.thr*(E.redline*.5 - E.idle), k = S.v/9;
           tgt = Math.max(wheel, launch*(1-k) + wheel*k);
         }
-        if (S.v < .3) tgt = IDLE + eff*(REDLINE - IDLE); // fri turing når bilen står
+        if (S.v < .3) tgt = E.idle + eff*(E.redline - E.idle); // fri turing når bilen står
         if (S.blipT > 0) tgt += 400;
-        tgt = Math.max(IDLE, tgt);
+        tgt = Math.max(E.idle, tgt);
       }
       const rate = !S.running ? 2.5 : S.shiftT > 0 ? 25 : 10;
       S.rpm += (tgt - S.rpm) * Math.min(1, dt*rate);
-      S.rpm = Math.min(S.rpm, REDLINE + 60);
+      S.rpm = Math.min(S.rpm, E.redline + 60);
       if (!S.running && S.rpm < 80) S.rpm = 0;
     }
   }
@@ -469,7 +569,7 @@ function makeEngineDSP(sr) {
     W = r.width; cv.width = Math.round(r.width*dpr); cv.height = Math.round(r.width*dpr);
     cx2.setTransform(dpr,0,0,dpr,0,0);
   }
-  const A0 = Math.PI*.75, SW = Math.PI*1.5, ang = r => A0 + clamp(r,0,MAXRPM)/MAXRPM*SW;
+  const A0 = Math.PI*.75, SW = Math.PI*1.5, ang = r => A0 + clamp(r,0,E.maxRpm)/E.maxRpm*SW;
   function drawTach(){
     const c = cx2, w = W, cx = w/2, cy = w/2, R = w*.44;
     c.clearRect(0,0,w,w);
@@ -477,24 +577,24 @@ function makeEngineDSP(sr) {
     c.lineWidth = w*.012; c.strokeStyle = col.line;
     c.beginPath(); c.arc(cx,cy,R,A0,A0+SW); c.stroke();
     c.lineWidth = w*.03; c.strokeStyle = col.red;
-    c.beginPath(); c.arc(cx,cy,R-w*.009,ang(REDLINE),ang(MAXRPM)); c.stroke();
+    c.beginPath(); c.arc(cx,cy,R-w*.009,ang(E.redline),ang(E.maxRpm)); c.stroke();
     // aktiv bue
-    c.lineWidth = w*.012; c.strokeStyle = S.rpm >= REDLINE-200 ? col.red : col.amber;
+    c.lineWidth = w*.012; c.strokeStyle = S.rpm >= E.redline-200 ? col.red : col.amber;
     c.shadowColor = c.strokeStyle; c.shadowBlur = 10;
     c.beginPath(); c.arc(cx,cy,R,A0,ang(S.rpm)); c.stroke(); c.shadowBlur = 0;
     // streker og tall
     c.font = `600 ${Math.round(w*.062)}px "Saira Condensed","Arial Narrow",sans-serif`;
     c.textAlign = 'center'; c.textBaseline = 'middle';
-    for (let r=0; r<=MAXRPM; r+=250){
+    for (let r=0; r<=E.maxRpm; r+=250){
       const a = ang(r), major = r%1000===0, mid = r%500===0;
       const len = major ? w*.055 : mid ? w*.035 : w*.018;
       const r1 = R - w*.03, r2 = r1 - len;
-      c.strokeStyle = r >= REDLINE ? col.red : (major ? col.fg : col.muted);
+      c.strokeStyle = r >= E.redline ? col.red : (major ? col.fg : col.muted);
       c.lineWidth = major ? 2.4 : 1.2;
       c.beginPath(); c.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1); c.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2); c.stroke();
       if (major){
         const rt = r2 - w*.05;
-        c.fillStyle = r >= 9000 ? col.red : col.fg;
+        c.fillStyle = r >= E.redline ? col.red : col.fg;
         c.fillText(String(r/1000), cx+Math.cos(a)*rt, cy+Math.sin(a)*rt);
       }
     }
@@ -511,14 +611,14 @@ function makeEngineDSP(sr) {
   const leds = [...document.querySelectorAll('#lights i')];
   function drawUI(now){
     drawTach();
-    const r = S.rpm, n = clamp(Math.floor((r-5600)/220)+1, 0, 10), flash = r >= 7900 && ((now*10)|0)%2===0;
+    const r = S.rpm, n = clamp(Math.floor((r - E.redline*.68)/(E.redline*.027))+1, 0, 10), flash = r >= E.redline - 350 && ((now*10)|0)%2===0;
     leds.forEach((el,i)=>{ el.className = flash ? 'b' : (i < n ? (i<4?'g':i<7?'a':'r') : ''); });
     $('gear').textContent = S.running || S.rpm > 0 ? (S.v < .3 && S.thr < .05 ? 'N' : S.gear) : '–';
     $('kmh').textContent = Math.round(S.v*3.6);
     $('rpm').textContent = Math.round(r/10)*10;
     $('thr').textContent = Math.round(S.thr*100) + ' %';
     $('g').textContent = (S.a/9.81).toFixed(2).replace('.',',');
-    $('hz').textContent = Math.round(r/60*5) + ' Hz';
+    $('hz').textContent = E.turbo ? (S.boost*1.2).toFixed(1).replace('.',',') + ' bar' : Math.round(r/60*E.dsp.order.length/2) + ' Hz';
     $('gasFill').style.height = (S.padThr*100) + '%';
     $('gas').setAttribute('aria-valuenow', Math.round(S.padThr*100));
   }
@@ -591,6 +691,31 @@ function makeEngineDSP(sr) {
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible' && S.running) { try { wake = await navigator.wakeLock?.request('screen'); } catch {} }
   });
+
+  // ---------- Motorvalg ----------
+  const engBtns = [...document.querySelectorAll('.eng')];
+  function selectEngine(key){
+    if (!ENGINES[key]) return;
+    E = ENGINES[key];
+    engBtns.forEach(b => b.setAttribute('aria-checked', b.dataset.engine === key));
+    $('eyebrow').textContent = E.eyebrow;
+    $('h1').innerHTML = `${E.label} <span>Motorlyd</span>`;
+    $('hzLabel').textContent = E.turbo ? 'Boost' : 'Tenning';
+    S.rpm = Math.min(S.rpm, E.redline); S.boost = 0; S.bovArmed = false;
+    applyEngineAudio();
+    try { localStorage.setItem('motorlyd-engine', key); } catch {}
+  }
+  engBtns.forEach(b => {
+    b.addEventListener('click', () => selectEngine(b.dataset.engine));
+    b.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); e.stopPropagation();
+        const i = (engBtns.indexOf(b) + 1) % engBtns.length;
+        engBtns[i].focus(); selectEngine(engBtns[i].dataset.engine);
+      }
+    });
+  });
+  try { const k = localStorage.getItem('motorlyd-engine'); if (k) selectEngine(k); } catch {}
 
   sizeCanvas(); window.addEventListener('resize', sizeCanvas);
   requestAnimationFrame(loop);
