@@ -1,6 +1,6 @@
 # Carsound
 
-Syntetisk motorlyd i nettleseren som følger farten og akselerasjonen til bilen. Motorene er beskrevet i JSON-filer, så det er lett å legge til nye.
+Syntetisk motorlyd i nettleseren som følger farten og akselerasjonen til bilen. Motorene er beskrevet i JSON-filer, så det er lett å legge til nye, og hver motor vises i 3D med stempler som går i takt med tenningen.
 
 ## Slik virker det
 
@@ -8,6 +8,8 @@ Syntetisk motorlyd i nettleseren som følger farten og akselerasjonen til bilen.
 - **Kjør med GPS:** Farten kommer fra telefonens GPS, og akselerometeret fyller inn mellom målingene slik at lyden reagerer med en gang.
 - **Lydmotor:** Hver sylinder sender en eksospuls ved sin tenningsvinkel. Pulsene går gjennom to grenrør, samlerør og lyddemper simulert som rør med refleksjoner, deretter resonansfiltre. Deltoner på faste multipler av veivakselfrekvensen og innsugsstøy legges oppå.
 - **Girkasse:** Simulert sjutrinns girkasse med tenningskutt ved oppgiring og smell i eksosen ved motorbrems.
+- **3D-motor:** Three.js bygger motoren fra JSON-filen: sylindre, V-vinkel, stempler, veivstenger og veivaksel. Hver sylinder lyser når den tenner, og turboen spinner med trykket. Vist 40 ganger saktere enn virkelig turtall.
+- **Design:** Ambientlys i motorens farge, rund startknapp mellom pedalene og innstillinger i et eget ark. Animasjoner med [Motion](https://motion.dev), som skrus av ved redusert bevegelse.
 
 ### Motorer som følger med
 
@@ -30,7 +32,9 @@ Hver motor er én JSON-fil. Legg den i `engines/` og legg filnavnet til i `engin
   "name": "Min motor",
   "description": "Kort tekst på motorknappen",
   "eyebrow": "Linje over overskriften",
-  "about": "Forklaring som vises under «Slik regnes lyden ut»",
+  "about": "Forklaring som vises under «Om motoren»",
+  "accent": "#ffb240",
+  "layout": { "type": "inline" },
   "cylinders": { "cycleDeg": 720, "firingDeg": [0, 180, 360, 540], "bank": [0, 1, 0, 1], "imbalance": 0.05, "bankGain": [1, 1] },
   "rpm": { "idle": 800, "redline": 7000, "max": 8000 },
   "power": { "accel": 5, "torque": [[0, 0.5], [3000, 0.9], [5500, 1], [7000, 0.85]] },
@@ -51,6 +55,8 @@ Hver motor er én JSON-fil. Legg den i `engines/` og legg filnavnet til i `engin
 
 | Felt | Betydning |
 | --- | --- |
+| `accent` | Motorens farge for lys, turteller og knapper, som `#ffb240` |
+| `layout` | Hvordan 3D-motoren tegnes: `{ "type": "inline" }`, `{ "type": "V", "angleDeg": 90 }` eller `{ "type": "flat" }` |
 | `cylinders.cycleDeg` | 720 for firetakt, 360 for totakt |
 | `cylinders.firingDeg` | Veivakselvinkel for hver tenning i syklusen, stigende. Ujevne vinkler gir ujevn gange |
 | `cylinders.bank` | Hvilken sylinderrekke (0 eller 1) hver tenning går til, i samme rekkefølge |

@@ -5,6 +5,11 @@
   "description": "Atmosfærisk · 8250 o/min",
   "eyebrow": "Syntetisk V10 · 10 sylindre · rødt felt 8250 o/min",
   "about": "Ti sylindre i 90 graders V med jevn tenning hver 72. grad i rekkefølgen 1-6-5-10-2-7-3-8-4-9. Grunntonen er o/min ÷ 60 × 5, altså 688 Hz ved 8250 o/min. Rekkene har litt ulik rørlengde, som gir den knurrende undertonen, og innsuget fra ti gasspjeld gir hylet ved full gass.",
+  "accent": "#ffb240",
+  "layout": {
+    "type": "V",
+    "angleDeg": 90
+  },
   "cylinders": {
     "cycleDeg": 720,
     "firingDeg": [

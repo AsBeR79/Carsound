@@ -5,6 +5,11 @@
   "description": "Buldrende · 6500 o/min",
   "eyebrow": "Syntetisk kryssplan-V8 · 8 sylindre · rødt felt 6500 o/min",
   "about": "V8 med kryssplan-veivaksel og tenningsrekkefølge 1-8-4-3-6-5-7-2. Motoren tenner jevnt hver 90. grad, men hver sylinderrekke tenner ujevnt: venstre, høyre, høyre, venstre, høyre, venstre, venstre, høyre. Når de to rekkene går gjennom hvert sitt eksosrør, oppstår sterke halve ordener, særlig 2,5 ganger veivakselfrekvensen. Det er den typiske buldringen.",
+  "accent": "#ff5a3c",
+  "layout": {
+    "type": "V",
+    "angleDeg": 90
+  },
   "cylinders": {
     "cycleDeg": 720,
     "firingDeg": [

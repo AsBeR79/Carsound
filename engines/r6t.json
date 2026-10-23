@@ -5,6 +5,10 @@
   "description": "Plystring · blåseventil",
   "eyebrow": "Syntetisk turbo-R6 · 6 sylindre · 1,2 bar · rødt felt 7000 o/min",
   "about": "Rekkesekser med tenning hver 120. grad i rekkefølgen 1-5-3-6-2-4, så grunntonen er o/min ÷ 60 × 3. Turbinen demper eksospulsene, så lyden blir rundere og dypere. Trykket bygger seg opp med forsinkelse, plystringen stiger i tone med trykket, og blåseventilen slipper ut luften når du slipper gassen med trykk i systemet.",
+  "accent": "#5ec8ff",
+  "layout": {
+    "type": "inline"
+  },
   "cylinders": {
     "cycleDeg": 720,
     "firingDeg": [

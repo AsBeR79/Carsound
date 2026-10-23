@@ -4,114 +4,190 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Saira+Condensed:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Michroma&family=Saira+Condensed:wght@500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
 <style>
-/* Layout: instrument cluster first; controls beside it on wide screens, stacked under it on phones.
-   Deliberately single dark theme: a night-time dashboard. */
+/* Layout: stage with a live 3D engine on top, instrument cluster below it, engine picker and
+   pedals in the thumb zone; on wide screens the controls move to a right-hand column.
+   Deliberately one dark theme: a car interior at night with ambient light in the engine's colour. */
 :root{
-  --bg:#0a0c0f; --panel:#11151a; --panel-2:#171c22; --line:#262d36; --fg:#e7eaed; --muted:#87919b;
-  --amber:#ffb240; --red:#ee3b2e; --green:#3fcf72; --blue:#4fa9ff;
-  --display:"Saira Condensed","Arial Narrow",sans-serif;
-  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --bg:#0a0c0f; --bg-2:#101318; --card:#14181e; --card-2:#1a1f26; --line:#242a33; --line-2:#323a45;
+  --fg:#eef0f2; --muted:#8e98a3; --dim:#5d6672;
+  --accent:#ffb240; --red:#ff4a3d; --green:#43d17a; --blue:#4fa9ff; --on-accent:#120c03;
+  --accent-soft:color-mix(in oklab, var(--accent) 22%, transparent);
+  --accent-faint:color-mix(in oklab, var(--accent) 9%, transparent);
+  --display:"Michroma","Eurostile","Arial",sans-serif;
+  --num:"Saira Condensed","Arial Narrow",sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:18px;
   color-scheme:dark;
 }
 html,body{background:var(--bg);color:var(--fg)}
 body{font-family:var(--body);font-size:15px;line-height:1.45;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
-.app{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
-.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px}
-.eyebrow{font-family:var(--display);text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--muted)}
-h1{font-family:var(--display);font-weight:700;font-size:36px;line-height:1;margin:4px 0 0;text-wrap:balance}
-h1 span{color:var(--amber)}
-.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px;gap:2px}
-.seg button{font:600 14px var(--body);color:var(--muted);background:transparent;border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
-.seg button[aria-selected="true"]{background:var(--panel-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line)}
-button:focus-visible,.pad:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 32px;
+  background:radial-gradient(90% 60% at 50% 0%, var(--accent-faint), transparent 70%), var(--bg);
+  transition:background .6s}
+button{font:inherit;color:inherit}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.app{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 
-.grid{display:grid;gap:20px}
-@media (min-width:820px){.grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}}
+/* Topplinje */
+.top{display:flex;align-items:center;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.brand i{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);transition:background .6s,box-shadow .6s}
+.brand span{font-family:var(--display);font-size:13px;letter-spacing:.18em;text-transform:uppercase}
+.seg{display:inline-flex;background:var(--bg-2);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{font-weight:600;font-size:13px;color:var(--muted);background:transparent;border:0;border-radius:999px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.seg button[aria-selected="true"]{background:var(--card-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-2)}
+.icon-btn{width:40px;height:40px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--bg-2);border:1px solid var(--line);cursor:pointer}
+.icon-btn svg{width:20px;height:20px}
 
-.cluster{display:flex;flex-direction:column;align-items:center;gap:14px;background:radial-gradient(120% 90% at 50% 40%,#141a21 0%,var(--bg) 70%);border:1px solid var(--line);border-radius:14px;padding:18px 14px 16px}
-.lights{display:flex;gap:6px;justify-content:center}
-.lights i{width:16px;height:16px;border-radius:50%;background:#1b2027;box-shadow:inset 0 0 0 1px #2a313a;transition:background .05s}
-.lights i.g{background:var(--green);box-shadow:0 0 10px var(--green)}
-.lights i.a{background:var(--amber);box-shadow:0 0 10px var(--amber)}
-.lights i.r{background:var(--red);box-shadow:0 0 10px var(--red)}
-.lights i.b{background:var(--blue);box-shadow:0 0 12px var(--blue)}
-.dial{position:relative;width:min(100%,430px);max-width:100%;aspect-ratio:1}
-.dial canvas{position:absolute;inset:0;width:100%;height:100%}
-.hub{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-.gear{font-family:var(--display);font-weight:700;font-size:clamp(64px,22vw,104px);line-height:.9;color:var(--fg)}
-.gear-label{font-family:var(--display);text-transform:uppercase;letter-spacing:.2em;font-size:11px;color:var(--muted)}
-.speed{position:absolute;left:0;right:0;bottom:4%;text-align:center;font-family:var(--display)}
-.speed b{display:block;font-size:clamp(40px,12vw,58px);font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
-.speed small{text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--muted)}
-.readouts{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0}
-.readouts div{background:var(--panel);padding:10px 8px;text-align:center;min-width:0}
-.readouts dt{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--muted)}
-.readouts dd{margin:2px 0 0;font-family:var(--display);font-weight:600;font-size:22px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.layout{display:grid;gap:14px}
+@media (min-width:880px){
+  .layout{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);grid-template-areas:"stage cluster" "stage side";align-items:start}
+  .stage{height:100%;min-height:560px}
+  .stage{grid-area:stage}.cluster{grid-area:cluster}.side{grid-area:side}
+}
 
-.controls{display:flex;flex-direction:column;gap:16px;min-width:0}
-.engines{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.eng{text-align:left;font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
-.eng b{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.02em;overflow-wrap:anywhere}
+/* Scene med 3D-motor */
+.stage{position:relative;height:clamp(250px,64vw,440px);border-radius:var(--r);overflow:hidden;border:1px solid var(--line);
+  background:radial-gradient(70% 70% at 50% 62%, var(--accent-soft), transparent 70%), linear-gradient(180deg,var(--bg-2),var(--bg));
+  isolation:isolate}
+.stage::after{content:"";position:absolute;left:8%;right:8%;bottom:10%;height:18%;border-radius:50%;
+  background:radial-gradient(closest-side, #00000088, transparent);z-index:-1}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.stage-info{position:absolute;left:16px;top:14px;right:104px;pointer-events:none}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.stage h1{font-family:var(--display);font-weight:400;font-size:clamp(20px,5.6vw,30px);line-height:1.15;margin:6px 0 0;text-wrap:balance}
+.stage-hint{position:absolute;left:16px;bottom:12px;font-size:12px;color:var(--muted);background:#0a0c0fb3;border:1px solid var(--line);border-radius:999px;padding:4px 10px;pointer-events:none}
+.stage-fallback{position:absolute;inset:auto 16px 50% 16px;text-align:center;color:var(--muted);font-size:14px}
+
+/* Instrumenter */
+.cluster{background:linear-gradient(180deg,var(--card),var(--bg-2));border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 12px;display:flex;flex-direction:column;gap:10px}
+.lights{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;max-width:320px;width:100%;margin:0 auto}
+.lights i{height:5px;border-radius:3px;background:#1d222a}
+.lights i.g{background:var(--green);box-shadow:0 0 8px var(--green)}
+.lights i.a{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.lights i.r{background:var(--red);box-shadow:0 0 8px var(--red)}
+.lights i.b{background:var(--blue);box-shadow:0 0 10px var(--blue)}
+.gauge{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:2/1.02}
+.gauge canvas{position:absolute;inset:0;width:100%;height:100%}
+.speed{position:absolute;left:0;right:0;bottom:2%;text-align:center}
+.speed b{display:block;font-family:var(--num);font-weight:600;font-size:clamp(52px,16vw,76px);line-height:.9;font-variant-numeric:tabular-nums}
+.speed small{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.gearbox{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;align-items:center;min-width:58px;padding:6px 10px 4px;border-radius:14px;background:#0a0c0fcc;border:1px solid var(--line-2);pointer-events:none}
+.gearbox small{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.gearbox b{font-family:var(--num);font-size:40px;line-height:1;font-weight:700;color:var(--accent);display:inline-block;text-shadow:0 0 18px var(--accent-soft)}
+.chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0}
+.chips div{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:7px 6px;text-align:center;min-width:0}
+.chips dt{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.chips dd{margin:1px 0 0;font-family:var(--num);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* Høyre/nedre del */
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.section-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 -6px 2px}
+.engines{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 6px;margin:0 -2px;scrollbar-width:none}
+.engines::-webkit-scrollbar{display:none}
+.eng{flex:0 0 auto;width:min(46%,190px);min-width:150px;scroll-snap-align:start;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:border-color .3s,background .3s}
+.eng i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line-2);display:grid;place-items:center}
+.eng i::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--c)}
+.eng b{font-family:var(--display);font-weight:400;font-size:13px;letter-spacing:.04em;line-height:1.3;overflow-wrap:anywhere}
 .eng span{font-size:13px;color:var(--muted)}
-.eng[aria-checked="true"]{border-color:var(--amber);background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--amber)}
-.eng[aria-checked="true"] b{color:var(--amber)}
-.engine-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.ghost{font:600 14px var(--body);color:var(--fg);background:transparent;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
-.ghost:hover{border-color:var(--muted)}
-.start{font:700 18px var(--display);text-transform:uppercase;letter-spacing:.14em;color:#120c03;background:var(--amber);border:0;border-radius:12px;padding:18px;cursor:pointer;box-shadow:0 0 0 4px #ffb24022}
-.start:disabled{opacity:.45;cursor:default}
-.start.on{background:var(--panel-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line)}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
-.panel h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--muted);margin:0}
-.pads{display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
-.pad{position:relative;height:190px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;font:700 15px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--fg)}
-.pad .fill{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(to top,#ffb24055,#ffb24018)}
-.pad span{position:relative}
-.pad.brake.down{background:#ee3b2e33;border-color:var(--red)}
-.hint{font-size:13px;color:var(--muted);margin:0}
-kbd{font:600 12px var(--body);background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--fg)}
+.eng[aria-checked="true"]{border-color:var(--c);background:color-mix(in oklab, var(--c) 12%, var(--card));box-shadow:inset 0 0 22px -10px var(--c)}
+.eng[aria-checked="true"] i{border-color:var(--c)}
+
+.drive{display:grid;grid-template-columns:1fr auto 1.25fr;gap:12px;align-items:end;perspective:700px}
+.drive.gps{grid-template-columns:1fr}
+.drive.gps .pedal{display:none}
+.pedal{position:relative;height:178px;border-radius:18px;border:1px solid var(--line-2);overflow:hidden;
+  background:repeating-linear-gradient(180deg,var(--card-2) 0 12px,var(--card) 12px 14px);
+  transform:rotateX(16deg);transform-origin:50% 100%;transition:transform .12s, border-color .2s;
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;
+  box-shadow:0 14px 24px -14px #000}
+.pedal span{position:relative;font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.pedal .fill{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(to top,color-mix(in oklab, var(--accent) 55%, transparent),color-mix(in oklab, var(--accent) 12%, transparent))}
+.pedal.brake{height:140px}
+.pedal.down{transform:rotateX(30deg);border-color:var(--accent)}
+.pedal.brake.down{border-color:var(--red);background:color-mix(in oklab, var(--red) 22%, var(--card))}
+.start-wrap{position:relative;width:104px;height:104px;justify-self:center;margin-bottom:18px}
+.start-ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);opacity:0;pointer-events:none}
+.start{position:relative;width:100%;height:100%;border-radius:50%;cursor:pointer;border:0;
+  background:radial-gradient(circle at 50% 35%, color-mix(in oklab, var(--accent) 70%, #fff) 0%, var(--accent) 45%, color-mix(in oklab, var(--accent) 60%, #000) 100%);
+  color:var(--on-accent);box-shadow:0 0 0 6px var(--bg-2), 0 0 0 7px var(--line-2), 0 12px 30px -8px var(--accent);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.start b{font-size:15px;letter-spacing:.14em}
+.start small{font-size:9px;letter-spacing:.16em;text-transform:uppercase;opacity:.8}
+.start:disabled{opacity:.4;cursor:default}
+.start.on{background:radial-gradient(circle at 50% 35%, var(--card-2), var(--bg-2));color:var(--fg);box-shadow:0 0 0 6px var(--bg-2), 0 0 0 7px var(--accent), 0 0 30px -6px var(--accent)}
+.hint{font-size:13px;color:var(--muted);margin:0;text-align:center}
+kbd{font:600 12px var(--body);background:var(--card-2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--fg)}
+.gps-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .status{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:14px}
 .status dt{color:var(--muted)}
 .status dd{margin:0;font-variant-numeric:tabular-nums}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px;vertical-align:1px}
-.dot.ok{background:var(--green)} .dot.wait{background:var(--amber)} .dot.err{background:var(--red)}
-.msg{font-size:14px;border-left:3px solid var(--amber);padding:8px 10px;background:var(--panel-2);border-radius:0 8px 8px 0;margin:0;overflow-wrap:anywhere}
+.dot.ok{background:var(--green)} .dot.wait{background:var(--accent)} .dot.err{background:var(--red)}
+.msg{font-size:14px;border-left:3px solid var(--accent);padding:8px 10px;background:var(--bg-2);border-radius:0 10px 10px 0;margin:0;overflow-wrap:anywhere}
 .msg.err{border-left-color:var(--red)}
-.vol{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
-.vol input{flex:1;accent-color:var(--amber);min-width:0}
-details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
-summary{cursor:pointer;font-weight:600}
-details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
-.ratios{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-variant-numeric:tabular-nums}
-.ratios span{font-family:var(--display);background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
-.foot{font-size:13px;color:var(--muted);max-width:70ch}
-@media (prefers-reduced-motion:reduce){.lights i{transition:none}}
+.foot{font-size:12px;color:var(--dim);max-width:70ch;margin:0}
+
+/* Innstillingsark */
+.backdrop{position:fixed;inset:0;background:#000000a6;z-index:20}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:86vh;overflow:auto;background:var(--card);border-top:1px solid var(--line-2);border-radius:22px 22px 0 0;
+  padding:10px max(18px,env(safe-area-inset-right,0px)) calc(22px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  box-shadow:0 -20px 50px -10px #000}
+@media (min-width:880px){.sheet{left:auto;right:24px;bottom:24px;width:420px;border-radius:22px;border:1px solid var(--line-2);max-height:calc(100vh - 48px)}}
+.sheet-grip{width:44px;height:5px;border-radius:3px;background:var(--line-2);margin:0 auto 10px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sheet h2{font-family:var(--display);font-weight:400;font-size:15px;letter-spacing:.06em;margin:0}
+.sheet section{display:flex;flex-direction:column;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
+.sheet h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
+.row{display:flex;align-items:center;gap:12px;font-size:14px}
+.row label{min-width:72px;color:var(--muted)}
+.row input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+.ghost{font-weight:600;font-size:14px;background:transparent;border:1px dashed var(--line-2);border-radius:10px;padding:9px 12px;cursor:pointer;align-self:flex-start}
+.ghost:hover{border-color:var(--muted)}
+.sheet p{margin:0;color:#c6ccd3;font-size:14px;max-width:62ch}
+.sheet details summary{cursor:pointer;font-weight:600;font-size:14px}
+.sheet details p{margin-top:8px}
+.ratios{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-variant-numeric:tabular-nums}
+.ratios span{font-family:var(--num);font-size:14px;background:var(--bg-2);border:1px solid var(--line);border-radius:6px;padding:1px 8px}
+code{font-size:13px;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
 </style>
 
 <div class="app">
   <header class="top">
-    <div>
-      <div class="eyebrow" id="eyebrow">Laster motorer…</div>
-      <h1 id="h1">Motor<span>lyd</span></h1>
-    </div>
+    <div class="brand"><i></i><span>Carsound</span></div>
     <div class="seg" role="tablist" aria-label="Modus">
       <button id="tabSim" role="tab" aria-selected="true">Simulator</button>
-      <button id="tabGps" role="tab" aria-selected="false">Kjør med GPS</button>
+      <button id="tabGps" role="tab" aria-selected="false">GPS</button>
     </div>
+    <button class="icon-btn" id="openSettings" aria-label="Innstillinger" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
   </header>
 
-  <main class="grid">
+  <main class="layout">
+    <section class="stage" id="stage" aria-label="Motoren i 3D">
+      <canvas id="engine3d" aria-hidden="true"></canvas>
+      <div class="stage-info">
+        <div class="eyebrow" id="eyebrow">Laster motorer…</div>
+        <h1 id="engineName">Carsound</h1>
+      </div>
+      <div class="gearbox" aria-live="off"><small>Gir</small><b id="gear">–</b></div>
+      <div class="stage-hint" id="stageHint">Dra for å snu · vist 40× saktere</div>
+      <p class="stage-fallback" id="stageFallback" hidden>3D-visningen er ikke tilgjengelig i denne nettleseren. Lyden virker som vanlig.</p>
+    </section>
+
     <section class="cluster" aria-label="Instrumenter">
       <div class="lights" id="lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="dial">
+      <div class="gauge">
         <canvas id="tach" aria-label="Turteller"></canvas>
-        <div class="hub"><div class="gear" id="gear">–</div><div class="gear-label">gir</div></div>
         <div class="speed"><b id="kmh">0</b><small>km/t</small></div>
       </div>
-      <dl class="readouts">
+      <dl class="chips">
         <div><dt>o/min</dt><dd id="rpm">0</dd></div>
         <div><dt>Gass</dt><dd id="thr">0 %</dd></div>
         <div><dt>G</dt><dd id="g">0,00</dd></div>
@@ -119,61 +195,84 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
       </dl>
     </section>
 
-    <section class="controls">
+    <section class="side">
+      <p class="section-label">Velg motor</p>
       <div class="engines" id="engines" role="radiogroup" aria-label="Velg motor"></div>
-      <div class="engine-tools">
-        <button class="ghost" id="importBtn" type="button">Importer motor (.json)</button>
-        <input type="file" id="importFile" accept=".json,application/json" hidden>
-      </div>
-      <p class="msg" id="engMsg" hidden></p>
-      <button class="start" id="start" disabled>Start motor</button>
 
-      <div class="panel" id="simPanel">
-        <h2>Simulator</h2>
-        <div class="pads">
-          <div class="pad brake" id="brake" role="button" tabindex="0" aria-label="Brems (hold inne)"><span>Brems</span></div>
-          <div class="pad" id="gas" role="slider" tabindex="0" aria-label="Gass" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill" id="gasFill"></div><span>Gass</span></div>
+      <div class="drive" id="drive">
+        <div class="pedal brake" id="brake" role="button" tabindex="0" aria-label="Brems (hold inne)"><span>Brems</span></div>
+        <div class="start-wrap">
+          <span class="start-ring" id="startRing"></span>
+          <button class="start" id="start" disabled><b id="startLabel">START</b><small id="startSub">motor</small></button>
         </div>
-        <p class="hint">Hold inne gass-feltet. Høyere opp betyr mer gass. Tastatur: <kbd>↑</kbd> eller <kbd>W</kbd> gir full gass, <kbd>↓</kbd> eller <kbd>mellomrom</kbd> bremser.</p>
+        <div class="pedal" id="gas" role="slider" tabindex="0" aria-label="Gass" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill" id="gasFill"></div><span>Gass</span></div>
       </div>
+      <p class="hint" id="simHint">Hold inne gasspedalen. Lenger opp gir mer gass. Tastatur: <kbd>↑</kbd> gass, <kbd>↓</kbd> brems.</p>
 
-      <div class="panel" id="gpsPanel" hidden>
-        <h2>Kjør med GPS</h2>
+      <div class="gps-card" id="gpsPanel" hidden>
         <dl class="status">
           <dt>Posisjon</dt><dd id="stGps"><span class="dot"></span>Ikke startet</dd>
           <dt>Nøyaktighet</dt><dd id="stAcc">–</dd>
           <dt>GPS-fart</dt><dd id="stSpd">–</dd>
           <dt>Bevegelse</dt><dd id="stMot"><span class="dot"></span>Ikke startet</dd>
         </dl>
-        <p class="msg" id="gpsMsg">Trykk «Start motor». Siden ber da om tilgang til posisjon og bevegelsessensorer.</p>
+        <p class="msg" id="gpsMsg">Trykk start. Siden ber da om tilgang til posisjon og bevegelsessensorer.</p>
       </div>
-
-      <label class="vol" for="vol">Volum <input type="range" id="vol" min="0" max="100" value="70"></label>
-      <label class="vol" for="whistle" id="whistleRow" hidden>Plystring <input type="range" id="whistle" min="0" max="200" value="100"></label>
-
-      <details>
-        <summary>Slik regnes lyden ut</summary>
-        <p id="engineAbout"></p>
-        <p>Lyden er syntetisert i nettleseren, uten opptak. Hver sylinder sender en eksospuls ved sin tenningsvinkel. Pulsene fra hver sylinderrekke går gjennom sitt eget grenrør, så videre til et samlerør og en lyddemper, som alle er simulert som rør med refleksjoner. Resonansfiltre gir klangen, og deltoner på faste multipler av veivakselfrekvensen gir motoren en tydelig tone.</p>
-        <p>Turtallet kommer fra farten og en simulert sjutrinns girkasse med slutteveksling 3,62 og et hjul med omkrets 2,13 m. Gasspådraget avgjør når den skifter opp og hvor rå lyden blir. Slipper du gassen på høyt turtall, gir feiltenninger og smell i eksosen knitringen. Ved oppgiring kuttes tenningen et øyeblikk.</p>
-        <div class="ratios" id="ratios"></div>
-        <p>Hver motor er en JSON-fil i mappen <code>engines/</code> med tenningsvinkler, sylinderrekker, turtall, eksosrør, resonanser, deltoner og eventuell turbo. Lag din egen og legg den til med «Importer motor».</p>
-        <p>I GPS-modus kommer farten fra posisjonen omtrent én gang i sekundet. Akselerometeret fyller inn mellom målingene, slik at lyden reagerer med en gang du gir gass.</p>
-      </details>
     </section>
   </main>
 
-  <p class="foot">GPS og bevegelsessensorer er blokkert inne i Claude. Simulatoren virker her. For å bruke siden i bilen må den ligge på en HTTPS-adresse og åpnes i mobilens nettleser. Fest telefonen i en holder og ikke se på skjermen mens du kjører.</p>
+  <p class="foot">Fest telefonen i en holder og ikke se på skjermen mens du kjører. Inne i Claude virker bare simulatoren, fordi GPS og sensorer er blokkert der.</p>
 </div>
+
+<div class="backdrop" id="backdrop" hidden></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="sheet-grip" aria-hidden="true"></div>
+  <div class="sheet-head">
+    <h2 id="sheetTitle">Innstillinger</h2>
+    <button class="icon-btn" id="closeSettings" aria-label="Lukk">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <section>
+    <h3>Lyd</h3>
+    <div class="row"><label for="vol">Volum</label><input type="range" id="vol" min="0" max="100" value="70"></div>
+    <div class="row" id="whistleRow" hidden><label for="whistle">Plystring</label><input type="range" id="whistle" min="0" max="200" value="100"></div>
+  </section>
+  <section>
+    <h3>Om motoren</h3>
+    <p id="engineAbout"></p>
+  </section>
+  <section>
+    <h3>Egne motorer</h3>
+    <p>Hver motor er en JSON-fil med tenningsvinkler, sylinderrekker, eksosrør, resonanser, deltoner og eventuell turbo. Formatet står i README-en i Carsound-repoet.</p>
+    <button class="ghost" id="importBtn" type="button">Importer motor (.json)</button>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+    <p class="msg" id="engMsg" hidden></p>
+  </section>
+  <section>
+    <details>
+      <summary>Slik regnes lyden ut</summary>
+      <p>Lyden er syntetisert i nettleseren, uten opptak. Hver sylinder sender en eksospuls ved sin tenningsvinkel. Pulsene fra hver sylinderrekke går gjennom sitt eget grenrør, så videre til et samlerør og en lyddemper, som alle er simulert som rør med refleksjoner. Resonansfiltre gir klangen, og deltoner på faste multipler av veivakselfrekvensen gir motoren en tydelig tone.</p>
+      <p>Turtallet kommer fra farten og en simulert sjutrinns girkasse med slutteveksling 3,62 og et hjul med omkrets 2,13 m.</p>
+      <div class="ratios" id="ratios"></div>
+      <p>I GPS-modus kommer farten fra posisjonen omtrent én gang i sekundet. Akselerometeret fyller inn mellom målingene, slik at lyden reagerer med en gang.</p>
+    </details>
+  </section>
+</aside>
 
 <script>
 (() => {
   const $ = id => document.getElementById(id);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const M = window.Motion || null;
+  const anim = (el, kf, opts) => { if (!M || reduceMotion || !el) return null; try { return M.animate(el, kf, opts); } catch { return null; } };
+  const SPRING = { type: 'spring', stiffness: 420, damping: 26 };
 
   // ---------- Bilmodell ----------
   const RATIOS = [3.985, 2.652, 1.806, 1.392, 1.159, 1.0, 0.833];
   const FINAL = 3.62, CIRC = 2.13;
   const clamp = (x,a,b) => Math.min(b,Math.max(a,x));
+  const mod = (a,m) => ((a % m) + m) % m;
   const interp = (c, x) => {
     if (x <= c[0][0]) return c[0][1];
     for (let i=1;i<c.length;i++) if (x <= c[i][0]) { const [x0,y0]=c[i-1],[x1,y1]=c[i]; return y0+(y1-y0)*(x-x0)/(x1-x0); }
@@ -192,7 +291,6 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
   $('ratios').innerHTML = RATIOS.map((r,i)=>`<span>${i+1}. gir ${r.toFixed(3).replace('.',',')}</span>`).join('');
 
   // ---------- Motorformat ----------
-  // Se README for feltene. Filene valideres og gjøres om til ferdige parametre før lyden bruker dem.
   function validCurve(c){
     return Array.isArray(c) && c.length >= 2 && c.every((pt,i) =>
       Array.isArray(pt) && pt.length === 2 && pt.every(v => typeof v === 'number' && isFinite(v)) && (i === 0 || pt[0] > c[i-1][0]));
@@ -203,6 +301,12 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
     if (j.format !== 1) p.push('format må være 1.');
     if (typeof j.id !== 'string' || !/^[a-z0-9-]{1,40}$/.test(j.id)) p.push('id må bestå av små bokstaver, tall og bindestrek.');
     if (typeof j.name !== 'string' || !j.name.trim() || j.name.length > 40) p.push('name må være en tekst på 1–40 tegn.');
+    if (j.accent != null && !/^#[0-9a-fA-F]{6}$/.test(j.accent)) p.push('accent må være en farge på formen #ffb240.');
+    if (j.layout != null) {
+      const L = j.layout;
+      if (!L || !['V','inline','flat'].includes(L.type)) p.push('layout.type må være V, inline eller flat.');
+      else if (L.type === 'V' && (!num(L.angleDeg) || L.angleDeg < 10 || L.angleDeg > 180)) p.push('layout.angleDeg må være mellom 10 og 180 for en V-motor.');
+    }
     const c = j.cylinders || {};
     if (c.cycleDeg !== 360 && c.cycleDeg !== 720) p.push('cylinders.cycleDeg må være 360 eller 720.');
     if (!Array.isArray(c.firingDeg) || c.firingDeg.length < 1 || c.firingDeg.length > 16) p.push('cylinders.firingDeg må ha 1–16 vinkler.');
@@ -263,6 +367,8 @@ details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
     const w = pu.widthDeg || [72, 38], nz = pu.noise || [.12, .42];
     return {
       id: j.id, name: j.name, description: j.description || '', eyebrow: j.eyebrow || `Syntetisk ${j.name}`, about: j.about || '', source,
+      accent: j.accent || '#ffb240',
+      layout: j.layout || (c.bank.includes(1) ? { type: 'V', angleDeg: 90 } : { type: 'inline' }),
       idle: j.rpm.idle, redline: j.rpm.redline, maxRpm: j.rpm.max || Math.ceil(j.rpm.redline*1.1/1000)*1000,
       accel: j.power.accel, tq: j.power.torque, firesPerRev: n / (c.cycleDeg/360),
       turbo: t ? { spool: t.spoolSec, drop: t.dropSec || .3, maxBar: t.maxBar,
@@ -348,14 +454,12 @@ function makeEngineDSP(sr, cfg) {
         }
         q.t++;
       }
-      // Eksos: to grenrør -> samlerør -> lyddemper
       var a = comb(hdrA, eA, HG, 0.5), b = comb(hdrB, eB, HG, 0.5);
       var c = comb(coll, (a + b) * 0.7, CG, 0.35);
       var m = comb(muff, c, MG, 0.7);
       var drive = 1.1 + DRV * st.load;
       var y = Math.tanh(m * drive * 0.8) / Math.sqrt(drive);
       var o = y - dc[0] + 0.995 * dc[1]; dc[0] = y; dc[1] = o;
-      // Innsug: kort trompet-resonans
       var ii = comb(intk, inx, 0.55, 0.6);
       var o2 = ii - dc[2] + 0.995 * dc[3]; dc[2] = ii; dc[3] = o2;
       out0[k] = o * 0.6 * st.on;
@@ -405,19 +509,16 @@ function makeEngineDSP(sr, cfg) {
     const split = ctx.createChannelSplitter(2);
     src.connect(split);
 
-    // Eksos: høypass -> motorens resonansfiltre -> lavpass -> nivå
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 32;
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .7;
     const exG = ctx.createGain(); exG.gain.value = E.exGain;
     split.connect(hp, 0); lp.connect(exG).connect(master);
 
-    // Innsug: hyl som følger andre harmoniske av tenningsfrekvensen
     const ibp = ctx.createBiquadFilter(); ibp.type = 'bandpass'; ibp.Q.value = 1.4;
     const ilp = ctx.createBiquadFilter(); ilp.type = 'lowpass'; ilp.frequency.value = 6000;
     const inG = ctx.createGain(); inG.gain.value = 0;
     split.connect(ibp, 1); ibp.connect(ilp).connect(inG).connect(master);
 
-    // Deltoner: rene toner på faste multipler av veivakselfrekvensen
     const ordOsc = [], ordG = [];
     for (let i=0;i<MAX_ORDERS;i++){
       const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 50;
@@ -426,14 +527,12 @@ function makeEngineDSP(sr, cfg) {
       ordOsc.push(o); ordG.push(g);
     }
 
-    // Startmotor
     const starter = ctx.createOscillator(); starter.type = 'sawtooth'; starter.frequency.value = 160;
     const stLp = ctx.createBiquadFilter(); stLp.type = 'lowpass'; stLp.frequency.value = 900;
     const gStart = ctx.createGain(); gStart.gain.value = 0;
     starter.connect(stLp).connect(gStart).connect(master);
     starter.start();
 
-    // Turbo: plystring fra kompressorhjulet og sus fra luftstrømmen
     const nb = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate), nd = nb.getChannelData(0);
     for (let i=0;i<nd.length;i++) nd[i] = Math.random()*2-1;
     const whine1 = ctx.createOscillator(); whine1.type = 'sine';
@@ -472,7 +571,6 @@ function makeEngineDSP(sr, cfg) {
     node.connect(A.lp);
   }
 
-  // Blåseventil: trykkluft slippes ut når gassen slippes med trykk i systemet
   function bov(strength){
     if (!A || !E.turbo) return;
     strength *= E.turbo.blowoff;
@@ -506,7 +604,6 @@ function makeEngineDSP(sr, cfg) {
     A.lp.frequency.setTargetAtTime(Math.min(14000, E.lp[0] + r*E.lp[1] + e*E.lp[2]), t, .04);
     A.ibp.frequency.setTargetAtTime(Math.min(7000, f*2), t, .02);
     A.inG.gain.setTargetAtTime(S.running ? (.15 + 1.3*e) * Math.pow(hi, 1.4) * E.intakeGain : 0, t, .04);
-    // Deltoner
     const crank = r/60, nyq = A.ctx.sampleRate*.45;
     const ordLevel = (on === 1 && S.rpm > 50) ? .12*(.55 + .45*e)*(cut ? .3 : 1) : 0;
     for (let i=0;i<MAX_ORDERS;i++){
@@ -514,7 +611,6 @@ function makeEngineDSP(sr, cfg) {
       if (o) A.ordOsc[i].frequency.setTargetAtTime(Math.max(1, Math.min(fr, nyq)), t, .015);
       A.ordG[i].gain.setTargetAtTime(o && fr < nyq ? interp(o.gain, r)*ordLevel : 0, t, .03);
     }
-    // Turbo
     const T = E.turbo, b = T ? S.boost : 0, w = T ? T.wLo + b*(T.wHi - T.wLo) : 1000, wv = T ? whistle.value/100*T.whistle : 0;
     A.whine1.frequency.setTargetAtTime(w, t, .03);
     A.whine2.frequency.setTargetAtTime(w*2.02, t, .03);
@@ -522,11 +618,156 @@ function makeEngineDSP(sr, cfg) {
     A.tG.gain.setTargetAtTime(Math.pow(b, 1.4)*(.16 + .2*S.thr)*wv, t, .04);
     A.airBp.frequency.setTargetAtTime(400 + w*.4, t, .05);
     A.airG.gain.setTargetAtTime(b*(.03 + .08*S.thr)*wv, t, .05);
-    // Startmotor
     A.gStart.gain.setTargetAtTime(S.starting > 0 ? .1 : 0, t, .03);
     A.starter.frequency.setTargetAtTime(150 + Math.sin(t*38)*25, t, .01);
   }
   const pop = () => A?.send({ pop: 1 });
+
+  // ---------- 3D-motor ----------
+  // Bygges fra motorfilen: antall sylindre, rekker, V-vinkel og tenningsvinkler.
+  // Hvert stempel står i toppen når veivakselen passerer tenningsvinkelen, og det lyser når sylinderen tenner.
+  const View3D = (() => {
+    const canvas = $('engine3d'), SLOW = 40;
+    let ok = false, renderer, scene, camera, group = null, cyl = [], crankMesh = null, turboWheel = null, rimA, rimB;
+    let visCrank = 0, yaw = .5, pitch = .42, dragYaw = 0, dragPitch = 0, lastDrag = -9, dist = 6, t0 = performance.now();
+    const UP = window.THREE ? new THREE.Vector3(0,1,0) : null;
+    function init(){
+      if (!window.THREE) return false;
+      try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' }); }
+      catch { return false; }
+      renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(32, 1, .1, 100);
+      scene.add(new THREE.HemisphereLight(0xb8c6d4, 0x0b0d10, .75));
+      const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(3, 5, 4); scene.add(key);
+      rimA = new THREE.PointLight(0xffb240, 2.2, 14); rimA.position.set(-3, 1.5, -3); scene.add(rimA);
+      rimB = new THREE.PointLight(0xffb240, 1.2, 10); rimB.position.set(2.5, -1.5, 2); scene.add(rimB);
+      canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); canvas._x = e.clientX; canvas._y = e.clientY; });
+      canvas.addEventListener('pointermove', e => {
+        if (!canvas.hasPointerCapture(e.pointerId)) return;
+        dragYaw += (e.clientX - canvas._x) * .008; dragPitch = clamp(dragPitch + (e.clientY - canvas._y) * .004, -.3, .5);
+        canvas._x = e.clientX; canvas._y = e.clientY; lastDrag = performance.now();
+      });
+      ok = true; resize(); return true;
+    }
+    function resize(){
+      if (!ok) return;
+      const r = canvas.parentElement.getBoundingClientRect();
+      renderer.setSize(r.width, r.height, false);
+      camera.aspect = r.width / Math.max(1, r.height);
+      camera.setViewOffset(r.width, r.height, 0, -r.height*.07, r.width, r.height);
+      camera.updateProjectionMatrix();
+      fit();
+    }
+    function fit(){
+      if (!group) return;
+      const sph = new THREE.Box3().setFromObject(group).getBoundingSphere(new THREE.Sphere());
+      const vf = camera.fov * Math.PI/180, hf = 2*Math.atan(Math.tan(vf/2)*camera.aspect);
+      dist = sph.radius / Math.sin(Math.min(vf, hf)/2) * 1.04;
+    }
+    function dispose(){
+      if (!group) return;
+      group.traverse(o => { o.geometry?.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); });
+      scene.remove(group); group = null; cyl = []; crankMesh = null; turboWheel = null;
+    }
+    function build(eng){
+      if (!ok) return;
+      dispose();
+      const accent = new THREE.Color(eng.accent);
+      rimA.color.copy(accent); rimB.color.copy(accent);
+      group = new THREE.Group();
+      const metal = new THREE.MeshStandardMaterial({ color: 0xc9d0d8, metalness: .7, roughness: .3 });
+      const dark = new THREE.MeshStandardMaterial({ color: 0x252b33, metalness: .5, roughness: .55 });
+      const glass = new THREE.MeshStandardMaterial({ color: 0xa9b6c4, metalness: .1, roughness: .15, transparent: true, opacity: .13, depthWrite: false });
+      const edge = new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: .32 });
+      const headMat = new THREE.MeshStandardMaterial({ color: 0x3a424c, metalness: .6, roughness: .4, transparent: true, opacity: .45, depthWrite: false });
+      const r = .24, L = .78, ph = .24, spacing = .8;
+      const lay = eng.layout, two = lay.type !== 'inline';
+      const half = lay.type === 'flat' ? Math.PI/2 : (lay.angleDeg || 90) * Math.PI/360;
+      const dirs = two ? [new THREE.Vector3(0, Math.cos(half), Math.sin(half)), new THREE.Vector3(0, Math.cos(half), -Math.sin(half))] : [new THREE.Vector3(0,1,0)];
+      const n = eng.dsp.firing.length, per = [0,0], slot = [], bankV = [];
+      for (let i=0;i<n;i++){ const b = two ? eng.dsp.bank[i] : 0; bankV.push(b); slot.push(per[b]++); }
+      const nb = Math.max(per[0], per[1]), len = (nb-1)*spacing + (two ? spacing*.5 : 0);
+      const sleeveGeo = new THREE.CylinderGeometry(r+.1, r+.1, 2*r+ph+.18, 28, 1, true);
+      const sleeveEdges = new THREE.EdgesGeometry(new THREE.CylinderGeometry(r+.1, r+.1, 2*r+ph+.18, 28, 1, true), 30);
+      const pistonGeo = new THREE.CylinderGeometry(r+.06, r+.06, ph, 28);
+      const rodGeo = new THREE.BoxGeometry(.07, L, .1);
+      const pinGeo = new THREE.SphereGeometry(.07, 12, 10);
+      const flashGeo = new THREE.SphereGeometry(r+.04, 20, 14);
+      for (let i=0;i<n;i++){
+        const b = bankV[i], d = dirs[b], perp = new THREE.Vector3(0, -d.z, d.y);
+        const base = new THREE.Vector3(slot[i]*spacing + (b === 1 ? spacing*.5 : 0) - len/2, 0, 0);
+        const q = new THREE.Quaternion().setFromUnitVectors(UP, d);
+        const sleeve = new THREE.Mesh(sleeveGeo, glass); sleeve.quaternion.copy(q); sleeve.position.copy(base).addScaledVector(d, L + .03);
+        const lines = new THREE.LineSegments(sleeveEdges, edge); lines.quaternion.copy(q); lines.position.copy(sleeve.position);
+        const piston = new THREE.Mesh(pistonGeo, metal); piston.quaternion.copy(q);
+        const rod = new THREE.Mesh(rodGeo, metal);
+        const pin = new THREE.Mesh(pinGeo, dark);
+        const flashMat = new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const flash = new THREE.Mesh(flashGeo, flashMat); flash.position.copy(base).addScaledVector(d, L + r + ph/2 + .02);
+        group.add(sleeve, lines, piston, rod, pin, flash);
+        cyl.push({ base, d, perp, piston, rod, pin, flash, fire: eng.dsp.firing[i], cycle: eng.dsp.cycle, f: 0, last: 0 });
+      }
+      for (let b=0;b<(two?2:1);b++){
+        const cnt = per[b]; if (!cnt) continue;
+        const d = dirs[b], q = new THREE.Quaternion().setFromUnitVectors(UP, d);
+        const head = new THREE.Mesh(new THREE.BoxGeometry((cnt-1)*spacing + .7, .08, .62), headMat);
+        head.quaternion.copy(q);
+        head.position.set((cnt-1)*spacing/2 + (b === 1 ? spacing*.5 : 0) - len/2, 0, 0).addScaledVector(d, L + r + ph/2 + .2);
+        group.add(head);
+      }
+      crankMesh = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, len + 1, 16), metal);
+      crankMesh.rotation.z = Math.PI/2; group.add(crankMesh);
+      const caseMesh = new THREE.Mesh(new THREE.BoxGeometry(len + .7, .34, .62), new THREE.MeshStandardMaterial({ color: 0x1b2027, metalness: .4, roughness: .7, transparent: true, opacity: .35, depthWrite: false }));
+      caseMesh.position.y = -.3; group.add(caseMesh);
+      if (eng.turbo) {
+        const tg = new THREE.Group();
+        const housing = new THREE.Mesh(new THREE.TorusGeometry(.3, .13, 14, 36), new THREE.MeshStandardMaterial({ color: accent.clone().lerp(new THREE.Color(0x8a939c), .55), metalness: .75, roughness: .35 }));
+        housing.rotation.y = Math.PI/2; tg.add(housing);
+        turboWheel = new THREE.Group();
+        for (let k=0;k<7;k++){ const bl = new THREE.Mesh(new THREE.BoxGeometry(.03, .26, .06), metal); bl.position.y = .12; const pivot = new THREE.Group(); pivot.rotation.x = k*Math.PI*2/7; pivot.add(bl); turboWheel.add(pivot); }
+        tg.add(turboWheel);
+        tg.position.set(len/2 + .75, .55, two ? 0 : -.55);
+        group.add(tg);
+      }
+      scene.add(group);
+      fit();
+      group.scale.setScalar(reduceMotion || !M ? 1 : .82);
+      if (M && !reduceMotion) { try { M.animate(group.scale, { x: 1, y: 1, z: 1 }, SPRING); } catch { group.scale.setScalar(1); } }
+    }
+    function frame(dt, rpm, boost, load){
+      if (!ok || !group) return;
+      const prev = visCrank;
+      visCrank += (rpm/60)*360*dt/SLOW;
+      for (const c of cyl){
+        const phi = mod(visCrank - c.fire, 360) * Math.PI/180;
+        const s = .24*Math.cos(phi) + Math.sqrt(.78*.78 - Math.pow(.24*Math.sin(phi), 2));
+        const pistonPos = c.base.clone().addScaledVector(c.d, s);
+        const pinPos = c.base.clone().addScaledVector(c.d, .24*Math.cos(phi)).addScaledVector(c.perp, .24*Math.sin(phi));
+        c.piston.position.copy(pistonPos);
+        c.pin.position.copy(pinPos);
+        c.rod.position.copy(pinPos).add(pistonPos).multiplyScalar(.5);
+        c.rod.quaternion.setFromUnitVectors(UP, pistonPos.clone().sub(pinPos).normalize());
+        const ph = mod(visCrank - c.fire, c.cycle), php = mod(prev - c.fire, c.cycle);
+        if (rpm > 50 && ph < php) c.f = .55 + .45*load;
+        c.f *= Math.exp(-dt*7);
+        c.flash.material.opacity = c.f*.95;
+        c.flash.scale.setScalar(.6 + c.f*.7);
+      }
+      if (crankMesh) crankMesh.rotation.x = visCrank*Math.PI/180;
+      if (turboWheel) turboWheel.rotation.x += dt*(1.5 + boost*45);
+      rimA.intensity = 1.6 + load*2.2; rimB.intensity = .8 + load*1.4;
+      const t = (performance.now() - t0)/1000, idle = performance.now() - lastDrag > 2500;
+      if (idle && !reduceMotion) dragYaw += dt*.12;
+      const yw = yaw + dragYaw, pt = pitch + dragPitch;
+      camera.position.set(Math.sin(yw)*Math.cos(pt)*dist, Math.sin(pt)*dist + .25, Math.cos(yw)*Math.cos(pt)*dist);
+      camera.lookAt(0, .45, 0);
+      renderer.render(scene, camera);
+    }
+    return { init, build, frame, resize, get ok(){ return ok; } };
+  })();
 
   // ---------- GPS og bevegelse ----------
   const G = { watch:null, vg:0, lastFix:null, ga:0, mot:0, hasMot:false, vEst:0 };
@@ -555,8 +796,7 @@ function makeEngineDSP(sr, cfg) {
     const a = e.acceleration;
     if (!a || a.x == null) return;
     if (!G.hasMot) { G.hasMot = true; setSt('stMot','ok','Akselerometer aktivt'); }
-    const m = Math.hypot(a.x, a.y, a.z);
-    G.mot += (m - G.mot) * .15;
+    G.mot += (Math.hypot(a.x, a.y, a.z) - G.mot) * .15;
   }
   function onFix(p){
     const c = p.coords, t = p.timestamp/1000;
@@ -619,12 +859,10 @@ function makeEngineDSP(sr, cfg) {
     let eff = S.shiftT > 0 ? 0 : S.thr;
     if (S.blipT > 0) eff = Math.max(eff, .55);
 
-    // Turtallssperre
     S.cut = S.running && S.rpm >= E.redline - 15 && S.thr > .4 && ((now*22)|0) % 2 === 0;
     if (S.cut) eff *= .1;
     S.eff = eff;
 
-    // Turbo: trykket bygger seg opp med forsinkelse og faller raskt når gassen slippes
     const T = E.turbo;
     if (T && S.running) {
       const tgt = clamp((S.rpm - T.start)/(T.full - T.start), 0, 1) * Math.pow(S.eff, .8);
@@ -636,7 +874,6 @@ function makeEngineDSP(sr, cfg) {
       }
     } else { S.boost += (0 - S.boost) * Math.min(1, dt*4); S.bovArmed = false; }
 
-    // Fysikk i simulator
     if (S.mode === 'sim') {
       const ratio = RATIOS[S.gear-1];
       const drive = (S.running && S.starting <= 0 && S.shiftT <= 0 && !S.cut) ? driveAccel(S.thr, S.rpm, S.gear) : 0;
@@ -648,7 +885,6 @@ function makeEngineDSP(sr, cfg) {
       S.a = a;
     }
 
-    // Girkasse
     if (S.v < 1.5 && S.gear > 1) S.gear = 1;
     if (S.running && S.shiftT <= 0 && now - S.lastShift > .35) {
       const r = rpmFromV(S.v, S.gear);
@@ -657,7 +893,6 @@ function makeEngineDSP(sr, cfg) {
       else if (S.gear > 1 && r < down && rpmFromV(S.v, S.gear-1) < E.redline - 550) shift(-1, now);
     }
 
-    // Motorens turtall
     if (S.starting > 0) {
       S.starting -= dt;
       S.rpm = 250 + Math.sin(now*40)*60;
@@ -671,7 +906,7 @@ function makeEngineDSP(sr, cfg) {
           const launch = E.idle + S.thr*(E.redline*.5 - E.idle), k = S.v/9;
           tgt = Math.max(wheel, launch*(1-k) + wheel*k);
         }
-        if (S.v < .3) tgt = E.idle + eff*(E.redline - E.idle); // fri turing når bilen står
+        if (S.v < .3) tgt = E.idle + eff*(E.redline - E.idle);
         if (S.blipT > 0) tgt += 400;
         tgt = Math.max(E.idle, tgt);
       }
@@ -682,62 +917,64 @@ function makeEngineDSP(sr, cfg) {
     }
   }
 
-  // ---------- Tegning ----------
+  // ---------- Turteller ----------
   const css = getComputedStyle(document.documentElement);
   const C = k => css.getPropertyValue(k).trim();
-  const col = { line:C('--line'), fg:C('--fg'), muted:C('--muted'), amber:C('--amber'), red:C('--red') };
-  const cv = $('tach'), cx2 = cv.getContext('2d');
-  let W = 0;
-  function sizeCanvas(){
+  const col = { line:C('--line-2'), fg:C('--fg'), muted:C('--muted'), red:C('--red') };
+  const cv = $('tach'), g2 = cv.getContext('2d');
+  let GW = 0, GH = 0;
+  function sizeGauge(){
     const r = cv.getBoundingClientRect(), dpr = Math.min(3, window.devicePixelRatio||1);
-    W = r.width; cv.width = Math.round(r.width*dpr); cv.height = Math.round(r.width*dpr);
-    cx2.setTransform(dpr,0,0,dpr,0,0);
+    GW = r.width; GH = r.height; cv.width = Math.round(GW*dpr); cv.height = Math.round(GH*dpr);
+    g2.setTransform(dpr,0,0,dpr,0,0);
   }
-  const A0 = Math.PI*.75, SW = Math.PI*1.5;
-  const ang = r => A0 + clamp(r,0,E.maxRpm)/E.maxRpm*SW;
-  function drawTach(){
-    const c = cx2, w = W, cx = w/2, cy = w/2, R = w*.44;
-    c.clearRect(0,0,w,w);
-    c.lineCap = 'butt';
-    c.lineWidth = w*.012; c.strokeStyle = col.line;
+  const A0 = Math.PI*.86, SW = Math.PI*1.28;
+  function drawGauge(){
+    const c = g2, cx = GW/2, cy = GH*.93, R = Math.min(GW*.44, GH*.86);
+    const ang = r => A0 + clamp(r,0,E.maxRpm)/E.maxRpm*SW;
+    const accent = E.accent;
+    c.clearRect(0,0,GW,GH);
+    c.lineCap = 'round';
+    c.lineWidth = Math.max(8, R*.07); c.strokeStyle = col.line;
     c.beginPath(); c.arc(cx,cy,R,A0,A0+SW); c.stroke();
-    c.lineWidth = w*.03; c.strokeStyle = col.red;
-    c.beginPath(); c.arc(cx,cy,R-w*.009,ang(E.redline),ang(E.maxRpm)); c.stroke();
-    c.lineWidth = w*.012; c.strokeStyle = S.rpm >= E.redline-200 ? col.red : col.amber;
-    c.shadowColor = c.strokeStyle; c.shadowBlur = 10;
-    c.beginPath(); c.arc(cx,cy,R,A0,ang(S.rpm)); c.stroke(); c.shadowBlur = 0;
-    c.font = `600 ${Math.round(w*.062)}px "Saira Condensed","Arial Narrow",sans-serif`;
+    c.lineCap = 'butt'; c.lineWidth = Math.max(3, R*.022); c.strokeStyle = col.red;
+    c.beginPath(); c.arc(cx,cy,R + R*.075,ang(E.redline),ang(E.maxRpm)); c.stroke();
+    if (S.rpm > 5) {
+      const grad = c.createLinearGradient(cx-R, 0, cx+R, 0);
+      grad.addColorStop(0, accent); grad.addColorStop(.75, accent); grad.addColorStop(1, col.red);
+      c.lineCap = 'round'; c.lineWidth = Math.max(8, R*.07); c.strokeStyle = grad;
+      c.shadowColor = S.rpm >= E.redline - 200 ? col.red : accent; c.shadowBlur = 16;
+      c.beginPath(); c.arc(cx,cy,R,A0,ang(S.rpm)); c.stroke(); c.shadowBlur = 0;
+    }
+    c.font = `600 ${Math.round(R*.13)}px "Saira Condensed","Arial Narrow",sans-serif`;
     c.textAlign = 'center'; c.textBaseline = 'middle';
-    const stepRpm = E.maxRpm > 12000 ? 500 : 250;
-    for (let r=0; r<=E.maxRpm; r+=stepRpm){
-      const a = ang(r), major = r%1000===0, mid = r%500===0;
-      const len = major ? w*.055 : mid ? w*.035 : w*.018;
-      const r1 = R - w*.03, r2 = r1 - len;
+    const big = E.maxRpm > 12000 ? 2000 : 1000;
+    for (let r=0; r<=E.maxRpm; r+=500){
+      const a = ang(r), major = r % big === 0;
+      const r1 = R - R*.1, r2 = r1 - (major ? R*.07 : R*.035);
       c.strokeStyle = r >= E.redline ? col.red : (major ? col.fg : col.muted);
-      c.lineWidth = major ? 2.4 : 1.2;
+      c.lineWidth = major ? 2 : 1;
       c.beginPath(); c.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1); c.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2); c.stroke();
-      if (major && (E.maxRpm <= 12000 || r%2000===0)){
-        const rt = r2 - w*.05;
-        c.fillStyle = r >= E.redline ? col.red : col.fg;
+      if (major) {
+        const rt = r2 - R*.1;
+        c.fillStyle = r >= E.redline ? col.red : col.muted;
         c.fillText(String(r/1000), cx+Math.cos(a)*rt, cy+Math.sin(a)*rt);
       }
     }
-    c.fillStyle = col.muted; c.font = `500 ${Math.round(w*.03)}px Barlow,system-ui,sans-serif`;
-    c.fillText('× 1000 o/min', cx, cy - R*.5);
-    const a = ang(S.rpm);
-    c.strokeStyle = col.amber; c.lineWidth = w*.011; c.lineCap = 'round';
-    c.shadowColor = col.amber; c.shadowBlur = 12;
-    c.beginPath(); c.moveTo(cx+Math.cos(a)*R*.62, cy+Math.sin(a)*R*.62); c.lineTo(cx+Math.cos(a)*(R-w*.035), cy+Math.sin(a)*(R-w*.035)); c.stroke();
-    c.shadowBlur = 0;
   }
 
   const leds = [...document.querySelectorAll('#lights i')];
+  let shownGear = null;
   function drawUI(now){
     if (!E) return;
-    drawTach();
+    drawGauge();
     const r = S.rpm, n = clamp(Math.floor((r - E.redline*.68)/(E.redline*.027))+1, 0, 10), flash = r >= E.redline - 350 && ((now*10)|0)%2===0;
     leds.forEach((el,i)=>{ el.className = flash ? 'b' : (i < n ? (i<4?'g':i<7?'a':'r') : ''); });
-    $('gear').textContent = S.running || S.rpm > 0 ? (S.v < .3 && S.thr < .05 ? 'N' : S.gear) : '–';
+    const gearText = S.running || S.rpm > 0 ? (S.v < .3 && S.thr < .05 ? 'N' : String(S.gear)) : '–';
+    if (gearText !== shownGear) {
+      shownGear = gearText; $('gear').textContent = gearText;
+      anim($('gear'), { scale: [1.45, 1], opacity: [.35, 1] }, SPRING);
+    }
     $('kmh').textContent = Math.round(S.v*3.6);
     $('rpm').textContent = Math.round(r/10)*10;
     $('thr').textContent = Math.round(S.thr*100) + ' %';
@@ -745,6 +982,7 @@ function makeEngineDSP(sr, cfg) {
     $('hz').textContent = E.turbo ? (S.boost*E.turbo.maxBar).toFixed(1).replace('.',',') + ' bar' : Math.round(r/60*E.firesPerRev) + ' Hz';
     $('gasFill').style.height = (S.padThr*100) + '%';
     $('gas').setAttribute('aria-valuenow', Math.round(S.padThr*100));
+    $('gas').classList.toggle('down', S.padThr > 0 || S.keyThr > 0);
   }
 
   let last = performance.now();
@@ -752,6 +990,7 @@ function makeEngineDSP(sr, cfg) {
     const dt = Math.min(.05, (t-last)/1000); last = t;
     const now = t/1000;
     step(dt, now); updateAudio(); drawUI(now);
+    if (E) View3D.frame(dt, S.rpm, S.boost, S.eff);
     requestAnimationFrame(loop);
   }
 
@@ -759,19 +998,29 @@ function makeEngineDSP(sr, cfg) {
   const vol = $('vol'), whistle = $('whistle');
   vol.addEventListener('input', () => { if (A) A.master.gain.setTargetAtTime(vol.value/100, A.ctx.currentTime, .05); });
 
+  let ringAnim = null;
+  function idlePulse(on){
+    ringAnim?.stop?.(); ringAnim = null;
+    if (on) ringAnim = anim($('startRing'), { scale: [1, 1.5], opacity: [.55, 0] }, { duration: 1.8, repeat: Infinity, ease: 'easeOut' });
+    else $('startRing').style.opacity = 0;
+  }
+
   let wake = null;
   $('start').addEventListener('click', async () => {
     if (!E) return;
+    anim($('start'), { scale: [.92, 1] }, SPRING);
     if (!A) await initAudio();
     if (A.ctx.state === 'suspended') await A.ctx.resume();
     if (!S.running) {
       S.running = true; S.starting = .75; S.gear = 1;
-      $('start').textContent = 'Stopp motor'; $('start').classList.add('on');
+      $('startLabel').textContent = 'STOPP'; $('startSub').textContent = 'motor'; $('start').classList.add('on');
+      idlePulse(false);
       try { wake = await navigator.wakeLock?.request('screen'); } catch {}
       if (S.mode === 'gps') startSensors();
     } else {
       S.running = false; S.starting = 0;
-      $('start').textContent = 'Start motor'; $('start').classList.remove('on');
+      $('startLabel').textContent = 'START'; $('startSub').textContent = 'motor'; $('start').classList.remove('on');
+      idlePulse(true);
       try { await wake?.release(); } catch {} wake = null;
       stopSensors();
     }
@@ -780,7 +1029,9 @@ function makeEngineDSP(sr, cfg) {
   function setMode(m){
     S.mode = m;
     $('tabSim').setAttribute('aria-selected', m==='sim'); $('tabGps').setAttribute('aria-selected', m==='gps');
-    $('simPanel').hidden = m !== 'sim'; $('gpsPanel').hidden = m !== 'gps';
+    $('drive').classList.toggle('gps', m === 'gps');
+    $('simHint').hidden = m !== 'sim'; $('gpsPanel').hidden = m !== 'gps';
+    if (m === 'gps') anim($('gpsPanel'), { y: [12, 0], opacity: [.4, 1] }, SPRING);
     S.padThr = 0; S.keyThr = 0; S.brake = false;
     if (m === 'gps') { G.vEst = S.v; if (S.running) startSensors(); }
     else stopSensors();
@@ -803,7 +1054,7 @@ function makeEngineDSP(sr, cfg) {
   const isGas = k => k==='ArrowUp' || k==='w' || k==='W';
   const isBrake = k => k==='ArrowDown' || k==='s' || k==='S' || k===' ';
   window.addEventListener('keydown', e => {
-    if (S.mode !== 'sim' || e.target.tagName === 'INPUT') return;
+    if (S.mode !== 'sim' || e.target.tagName === 'INPUT' || !$('sheet').hidden) return;
     if (isGas(e.key)) { S.keyThr = 1; e.preventDefault(); }
     if (isBrake(e.key) && e.target.tagName !== 'BUTTON') { S.brake = true; brake.classList.add('down'); e.preventDefault(); }
   });
@@ -817,6 +1068,25 @@ function makeEngineDSP(sr, cfg) {
     if (document.visibilityState === 'visible' && S.running) { try { wake = await navigator.wakeLock?.request('screen'); } catch {} }
   });
 
+  // ---------- Innstillingsark ----------
+  const sheet = $('sheet'), backdrop = $('backdrop');
+  let sheetReturn = null;
+  function openSheet(){
+    sheetReturn = document.activeElement;
+    sheet.hidden = false; backdrop.hidden = false;
+    anim(sheet, { y: ['40%', '0%'], opacity: [.6, 1] }, { type: 'spring', stiffness: 380, damping: 34 });
+    anim(backdrop, { opacity: [0, 1] }, { duration: .2 });
+    $('closeSettings').focus();
+  }
+  function closeSheet(){
+    sheet.hidden = true; backdrop.hidden = true;
+    sheetReturn?.focus?.();
+  }
+  $('openSettings').addEventListener('click', openSheet);
+  $('closeSettings').addEventListener('click', closeSheet);
+  backdrop.addEventListener('click', closeSheet);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden) closeSheet(); });
+
   // ---------- Motorvalg og import ----------
   const CUSTOM_KEY = 'carsound-custom-engines', SEL_KEY = 'motorlyd-engine';
   function engMsg(text, isErr){
@@ -827,34 +1097,43 @@ function makeEngineDSP(sr, cfg) {
     for (const eng of ENGINES.values()) {
       const b = document.createElement('button');
       b.className = 'eng'; b.type = 'button'; b.setAttribute('role', 'radio');
-      b.dataset.engine = eng.id; b.setAttribute('aria-checked', E && E.id === eng.id);
+      b.dataset.engine = eng.id; b.setAttribute('aria-checked', !!E && E.id === eng.id);
+      b.style.setProperty('--c', eng.accent);
+      const dot = document.createElement('i');
       const t = document.createElement('b'); t.textContent = eng.name;
       const d = document.createElement('span'); d.textContent = eng.description + (eng.source === 'custom' ? ' · importert' : '');
-      b.append(t, d);
-      b.addEventListener('click', () => selectEngine(eng.id));
+      b.append(dot, t, d);
+      b.addEventListener('click', () => selectEngine(eng.id, true));
       b.addEventListener('keydown', e => {
-        if (!['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key)) return;
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
         e.preventDefault(); e.stopPropagation();
         const all = [...box.querySelectorAll('.eng')], i = all.indexOf(b);
-        const nxt = all[(i + (e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : all.length - 1)) % all.length];
-        nxt.focus(); selectEngine(nxt.dataset.engine);
+        const nxt = all[(i + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+        nxt.focus(); selectEngine(nxt.dataset.engine, true);
       });
       box.append(b);
     }
   }
-  function selectEngine(id){
+  function selectEngine(id, animate){
     const eng = ENGINES.get(id);
     if (!eng) return;
+    const changed = !E || E.id !== id;
     E = eng;
-    document.querySelectorAll('.eng').forEach(b => b.setAttribute('aria-checked', b.dataset.engine === id));
+    const root = document.documentElement;
+    root.style.setProperty('--accent', E.accent);
+    document.querySelectorAll('.eng').forEach(b => {
+      const on = b.dataset.engine === id;
+      b.setAttribute('aria-checked', on);
+      if (on && animate) { anim(b, { scale: [.94, 1] }, SPRING); b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' }); }
+    });
     $('eyebrow').textContent = E.eyebrow;
-    const h = $('h1'); h.textContent = E.name + ' ';
-    const sp = document.createElement('span'); sp.textContent = 'Motorlyd'; h.append(sp);
+    $('engineName').textContent = E.name;
+    if (animate) anim($('engineName'), { x: [-10, 0], opacity: [.3, 1] }, SPRING);
     $('engineAbout').textContent = E.about;
     $('hzLabel').textContent = E.turbo ? 'Boost' : 'Tenning';
     $('whistleRow').hidden = !E.turbo;
     S.rpm = Math.min(S.rpm, E.redline); S.boost = 0; S.bovArmed = false;
-    applyEngineAudio();
+    if (changed) { applyEngineAudio(); View3D.build(E); }
     try { localStorage.setItem(SEL_KEY, id); } catch {}
   }
   async function loadBuiltIn(){
@@ -888,22 +1167,28 @@ function makeEngineDSP(sr, cfg) {
       const arr = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]').filter(x => x && x.id !== j.id);
       arr.push(j); localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr));
     } catch {}
-    renderEngineButtons(); selectEngine(j.id);
+    E = null; renderEngineButtons(); selectEngine(j.id, true);
     engMsg(`${j.name} er lagt til.`);
   });
 
   async function boot(){
+    const has3D = View3D.init();
+    if (!has3D) { $('stageFallback').hidden = false; $('stageHint').hidden = true; }
     try { await loadBuiltIn(); }
     catch { engMsg('Fant ikke motorfilene i engines/. Siden må åpnes fra en webserver, for eksempel GitHub Pages.', true); }
     loadCustom();
-    if (!ENGINES.size) { $('eyebrow').textContent = 'Ingen motorer lastet'; return; }
+    if (!ENGINES.size) { $('eyebrow').textContent = 'Ingen motorer lastet'; $('engineName').textContent = 'Fant ingen motorer'; return; }
     let saved = null; try { saved = localStorage.getItem(SEL_KEY); } catch {}
-    E = ENGINES.get(saved) || ENGINES.values().next().value;
-    renderEngineButtons(); selectEngine(E.id);
+    const first = ENGINES.get(saved) || ENGINES.values().next().value;
+    renderEngineButtons(); selectEngine(first.id, false);
     $('start').disabled = false;
+    idlePulse(true);
+    anim('.eng', { y: [10, 0], opacity: [.4, 1] }, { delay: M && !reduceMotion ? M.stagger(.06) : 0, type: 'spring', stiffness: 300, damping: 26 });
   }
 
-  sizeCanvas(); window.addEventListener('resize', sizeCanvas);
+  function onResize(){ sizeGauge(); View3D.resize(); }
+  sizeGauge(); window.addEventListener('resize', onResize);
+  if ('ResizeObserver' in window) new ResizeObserver(onResize).observe($('stage'));
   boot();
   requestAnimationFrame(loop);
 })();
