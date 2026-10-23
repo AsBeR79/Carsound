@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style></head><body>
+<title>V10 Motorlyd</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Saira+Condensed:wght@400;600;700&display=swap">
+<style>
+/* Layout: instrument cluster first; controls beside it on wide screens, stacked under it on phones.
+   Deliberately single dark theme: a night-time dashboard. */
+:root{
+  --bg:#0a0c0f; --panel:#11151a; --panel-2:#171c22; --line:#262d36; --fg:#e7eaed; --muted:#87919b;
+  --amber:#ffb240; --red:#ee3b2e; --green:#3fcf72; --blue:#4fa9ff;
+  --display:"Saira Condensed","Arial Narrow",sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+.app{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px}
+.eyebrow{font-family:var(--display);text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:36px;line-height:1;margin:4px 0 0;text-wrap:balance}
+h1 span{color:var(--amber)}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px;gap:2px}
+.seg button{font:600 14px var(--body);color:var(--muted);background:transparent;border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--panel-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line)}
+button:focus-visible,.pad:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+.grid{display:grid;gap:20px}
+@media (min-width:820px){.grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}}
+
+.cluster{display:flex;flex-direction:column;align-items:center;gap:14px;background:radial-gradient(120% 90% at 50% 40%,#141a21 0%,var(--bg) 70%);border:1px solid var(--line);border-radius:14px;padding:18px 14px 16px}
+.lights{display:flex;gap:6px;justify-content:center}
+.lights i{width:16px;height:16px;border-radius:50%;background:#1b2027;box-shadow:inset 0 0 0 1px #2a313a;transition:background .05s}
+.lights i.g{background:var(--green);box-shadow:0 0 10px var(--green)}
+.lights i.a{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+.lights i.r{background:var(--red);box-shadow:0 0 10px var(--red)}
+.lights i.b{background:var(--blue);box-shadow:0 0 12px var(--blue)}
+.dial{position:relative;width:min(100%,430px);max-width:100%;aspect-ratio:1}
+.dial canvas{position:absolute;inset:0;width:100%;height:100%}
+.hub{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.gear{font-family:var(--display);font-weight:700;font-size:clamp(64px,22vw,104px);line-height:.9;color:var(--fg)}
+.gear-label{font-family:var(--display);text-transform:uppercase;letter-spacing:.2em;font-size:11px;color:var(--muted)}
+.speed{position:absolute;left:0;right:0;bottom:4%;text-align:center;font-family:var(--display)}
+.speed b{display:block;font-size:clamp(40px,12vw,58px);font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.speed small{text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--muted)}
+.readouts{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0}
+.readouts div{background:var(--panel);padding:10px 8px;text-align:center;min-width:0}
+.readouts dt{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--muted)}
+.readouts dd{margin:2px 0 0;font-family:var(--display);font-weight:600;font-size:22px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.controls{display:flex;flex-direction:column;gap:16px;min-width:0}
+.start{font:700 18px var(--display);text-transform:uppercase;letter-spacing:.14em;color:#120c03;background:var(--amber);border:0;border-radius:12px;padding:18px;cursor:pointer;box-shadow:0 0 0 4px #ffb24022}
+.start.on{background:var(--panel-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.panel h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--muted);margin:0}
+.pads{display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
+.pad{position:relative;height:190px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;font:700 15px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--fg)}
+.pad .fill{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(to top,#ffb24055,#ffb24018)}
+.pad span{position:relative}
+.pad.brake{color:var(--fg)}
+.pad.brake.down{background:#ee3b2e33;border-color:var(--red)}
+.hint{font-size:13px;color:var(--muted);margin:0}
+kbd{font:600 12px var(--body);background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--fg)}
+.status{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:14px}
+.status dt{color:var(--muted)}
+.status dd{margin:0;font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px;vertical-align:1px}
+.dot.ok{background:var(--green)} .dot.wait{background:var(--amber)} .dot.err{background:var(--red)}
+.msg{font-size:14px;border-left:3px solid var(--amber);padding:8px 10px;background:var(--panel-2);border-radius:0 8px 8px 0;margin:0}
+.vol{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
+.vol input{flex:1;accent-color:var(--amber);min-width:0}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+summary{cursor:pointer;font-weight:600}
+details p{margin:10px 0 0;max-width:62ch;color:#c9cfd5}
+.ratios{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-variant-numeric:tabular-nums}
+.ratios span{font-family:var(--display);background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+.foot{font-size:13px;color:var(--muted);max-width:70ch}
+@media (prefers-reduced-motion:reduce){.lights i{transition:none}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Syntetisk V10 · 10 sylindre · rødt felt 8250 o/min</div>
+      <h1>V10 <span>Motorlyd</span></h1>
+    </div>
+    <div class="seg" role="tablist" aria-label="Modus">
+      <button id="tabSim" role="tab" aria-selected="true">Simulator</button>
+      <button id="tabGps" role="tab" aria-selected="false">Kjør med GPS</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="cluster" aria-label="Instrumenter">
+      <div class="lights" id="lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="dial">
+        <canvas id="tach" aria-label="Turteller"></canvas>
+        <div class="hub"><div class="gear" id="gear">–</div><div class="gear-label">gir</div></div>
+        <div class="speed"><b id="kmh">0</b><small>km/t</small></div>
+      </div>
+      <dl class="readouts">
+        <div><dt>o/min</dt><dd id="rpm">0</dd></div>
+        <div><dt>Gass</dt><dd id="thr">0 %</dd></div>
+        <div><dt>G</dt><dd id="g">0,00</dd></div>
+        <div><dt>Tenning</dt><dd id="hz">0 Hz</dd></div>
+      </dl>
+    </section>
+
+    <section class="controls">
+      <button class="start" id="start">Start motor</button>
+
+      <div class="panel" id="simPanel">
+        <h2>Simulator</h2>
+        <div class="pads">
+          <div class="pad brake" id="brake" role="button" tabindex="0" aria-label="Brems (hold inne)"><span>Brems</span></div>
+          <div class="pad" id="gas" role="slider" tabindex="0" aria-label="Gass" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill" id="gasFill"></div><span>Gass</span></div>
+        </div>
+        <p class="hint">Hold inne gass-feltet. Høyere opp betyr mer gass. Tastatur: <kbd>↑</kbd> eller <kbd>W</kbd> gir full gass, <kbd>↓</kbd> eller <kbd>mellomrom</kbd> bremser.</p>
+      </div>
+
+      <div class="panel" id="gpsPanel" hidden>
+        <h2>Kjør med GPS</h2>
+        <dl class="status">
+          <dt>Posisjon</dt><dd id="stGps"><span class="dot"></span>Ikke startet</dd>
+          <dt>Nøyaktighet</dt><dd id="stAcc">–</dd>
+          <dt>GPS-fart</dt><dd id="stSpd">–</dd>
+          <dt>Bevegelse</dt><dd id="stMot"><span class="dot"></span>Ikke startet</dd>
+        </dl>
+        <p class="msg" id="gpsMsg">Trykk «Start motor». Siden ber da om tilgang til posisjon og bevegelsessensorer.</p>
+      </div>
+
+      <label class="vol" for="vol">Volum <input type="range" id="vol" min="0" max="100" value="70"></label>
+
+      <details>
+        <summary>Slik regnes lyden ut</summary>
+        <p>Lyden er syntetisert i nettleseren, uten opptak. Hver sylinder sender en eksospuls i V10-rekkefølgen 1-6-5-10-2-7-3-8-4-9, med 72 graders avstand. Pulsene fra hver sylinderrekke går gjennom sitt eget grenrør, så videre til et samlerør og en lyddemper, som alle er simulert som rør med refleksjoner. Grunntonen blir o/min ÷ 60 × 5, altså 688 Hz ved 8250 o/min. At de to rekkene ikke er helt like, gir den knurrende undertonen. Innsuget fra de ti gasspjeldene gir hylet ved full gass og høyt turtall.</p>
+        <p>Turtallet kommer fra farten og en simulert sjutrinns girkasse med slutteveksling 3,62 og et hjul med omkrets 2,13 m. Gasspådraget avgjør når den skifter opp og hvor rå lyden blir. Slipper du gassen på høyt turtall, gir feiltenninger og smell i eksosen den typiske knitringen. Ved oppgiring kuttes tenningen et øyeblikk, slik en sekvensiell girkasse gjør.</p>
+        <div class="ratios" id="ratios"></div>
+        <p>I GPS-modus kommer farten fra posisjonen omtrent én gang i sekundet. Akselerometeret fyller inn mellom målingene, slik at lyden reagerer med en gang du gir gass.</p>
+      </details>
+    </section>
+  </main>
+
+  <p class="foot">GPS og bevegelsessensorer er blokkert inne i Claude. Simulatoren virker her. For å bruke siden i bilen må filen ligge på en HTTPS-adresse og åpnes i mobilens nettleser. Fest telefonen i en holder og ikke se på skjermen mens du kjører.</p>
+</div>
+
+<script>
+(() => {
+  // ---------- Bilmodell ----------
+  const RATIOS = [3.985, 2.652, 1.806, 1.392, 1.159, 1.0, 0.833];
+  const FINAL = 3.62, CIRC = 2.13, IDLE = 900, REDLINE = 8250, MAXRPM = 9000;
+  const TQ = [[0,.5],[1000,.62],[2000,.75],[4000,.88],[6100,1],[7750,.93],[8250,.86],[9000,.6]];
+  const torque = r => { for (let i=1;i<TQ.length;i++){ if (r<=TQ[i][0]) { const [x0,y0]=TQ[i-1],[x1,y1]=TQ[i]; return y0+(y1-y0)*(r-x0)/(x1-x0);} } return .6; };
+  const rpmFromV = (v,g) => v/CIRC*60*RATIOS[g-1]*FINAL;
+  const clamp = (x,a,b) => Math.min(b,Math.max(a,x));
+  const driveAccel = (thr,rpm,g) => Math.min(6.8, thr*5.4*torque(rpm)*(RATIOS[g-1]/RATIOS[0]));
+
+  const S = { mode:'sim', running:false, starting:0, rpm:0, v:0, gear:1, thr:0, eff:0, a:0,
+              shiftT:0, lastShift:-9, blipT:0, cut:false, brake:false, padThr:0, keyThr:0 };
+
+  document.getElementById('ratios').innerHTML =
+    RATIOS.map((r,i)=>`<span>${i+1}. gir ${r.toFixed(3).replace('.',',')}</span>`).join('');
+
+  // ---------- Lyd ----------
+  // Fysisk inspirert motorlyd: eksospulser per sylinder i V10-tenningsrekkefølgen,
+  // to grenrør, samlerør og lyddemper som bølgeledere, pluss innsug fra individuelle gasspjeld.
+function makeEngineDSP(sr) {
+  // V10, 90° V, 72° jevn tenning. Rekkefølge 1-6-5-10-2-7-3-8-4-9, rekke A = 1-5, rekke B = 6-10
+  var ORDER = [1, 6, 5, 10, 2, 7, 3, 8, 4, 9];
+  var CYL = [1.00, 0.93, 1.06, 0.97, 1.03, 0.95, 1.07, 0.99, 0.92, 1.05];
+  var st = { rpm: 0, load: 0, on: 0, tRpm: 0, tLoad: 0, tOn: 0, cut: 0, deg: 0, next: 0, idx: 0, seed: 22695477, popReq: 0 };
+  var pulses = [];
+  function DL(sec) { var n = Math.max(2, Math.round(sec * sr)); return { b: new Float32Array(n), i: 0, n: n, lp: 0 }; }
+  var hdrA = DL(0.0050), hdrB = DL(0.0057), coll = DL(0.0092), muff = DL(0.0034), intk = DL(0.0021);
+  var dc = [0, 0, 0, 0];
+  var kR = 1 - Math.exp(-1 / (0.012 * sr)), kL = 1 - Math.exp(-1 / (0.02 * sr)), kO = 1 - Math.exp(-1 / (0.06 * sr));
+  function rnd() { st.seed = (Math.imul(st.seed, 1664525) + 1013904223) >>> 0; return st.seed / 4294967296; }
+  function comb(d, x, g, damp) {
+    var y = d.b[d.i]; d.lp += (y - d.lp) * damp;
+    var o = x + g * d.lp; d.b[d.i] = o; d.i = (d.i + 1) % d.n; return o;
+  }
+  function fire() {
+    var rpm = Math.max(st.rpm, 250), load = st.load;
+    var cyl = ORDER[st.idx], bank = cyl <= 5 ? 0 : 1;
+    var amp = (0.22 + 0.78 * load) * CYL[cyl - 1] * (1 + (rnd() - 0.5) * 0.14);
+    var noise = 0.12 + 0.3 * load, width = 72 - 34 * load;
+    if (st.popReq > 0) { st.popReq--; amp = 2.2; noise = 1.1; width = 120; }
+    else if (st.cut) { amp *= 0.04; }
+    else if (load < 0.08 && rpm > 2600) {
+      var r = rnd();
+      if (r < 0.035 * (rpm / 8000)) { amp = 1.9 + rnd(); noise = 1.2; width = 130; }   // smell i eksosen
+      else if (r < 0.3) { amp *= 0.12; }                                                  // feiltenning
+      else { amp *= 0.55; }
+    }
+    var len = Math.max(10, width / 360 * 60 / rpm * sr);
+    pulses.push({ t: 0, len: len, amp: amp, bank: bank, noise: noise, kind: 0 });
+    // Innsug: bredere, mykere puls, sterk ved full gass
+    if (!st.cut) pulses.push({ t: -Math.round(len * 0.4), len: len * 1.7, amp: (0.1 + 0.9 * load) * CYL[cyl - 1], bank: bank, noise: 0.35, kind: 1 });
+  }
+  function process(out0, out1, n) {
+    for (var k = 0; k < n; k++) {
+      st.rpm += (st.tRpm - st.rpm) * kR;
+      st.load += (st.tLoad - st.load) * kL;
+      st.on += (st.tOn - st.on) * kO;
+      st.deg += st.rpm / 60 / sr * 360;
+      if (st.rpm > 120 && st.deg >= st.next) {
+        fire();
+        st.idx = (st.idx + 1) % 10;
+        st.next += 72 + (rnd() - 0.5) * (1.6 - st.load);
+      }
+      if (st.deg > 7200) { st.deg -= 7200; st.next -= 7200; }
+      if (st.rpm <= 120) { st.next = st.deg; }
+
+      var eA = 0, eB = 0, inx = 0;
+      for (var p = pulses.length - 1; p >= 0; p--) {
+        var q = pulses[p];
+        if (q.t >= 0) {
+          var u = q.t / q.len;
+          if (u >= 1) { pulses.splice(p, 1); continue; }
+          var s = Math.sin(Math.PI * u);
+          var v = q.amp * (s * (1 - 1.35 * u) + q.noise * (rnd() * 2 - 1) * s * s);
+          if (q.kind === 0) { if (q.bank === 0) eA += v; else eB += v; } else inx += v;
+        }
+        q.t++;
+      }
+      // Eksos: to grenrør -> samlerør -> lyddemper
+      var a = comb(hdrA, eA, -0.58, 0.5), b = comb(hdrB, eB, -0.58, 0.5);
+      var c = comb(coll, (a + b) * 0.7, 0.38, 0.35);
+      var m = comb(muff, c, -0.3, 0.7);
+      var drive = 1.1 + 2.6 * st.load;
+      var y = Math.tanh(m * drive * 0.8) / Math.sqrt(drive);
+      var o = y - dc[0] + 0.995 * dc[1]; dc[0] = y; dc[1] = o;
+      // Innsug: kort trompet-resonans
+      var ii = comb(intk, inx, 0.55, 0.6);
+      var o2 = ii - dc[2] + 0.995 * dc[3]; dc[2] = ii; dc[3] = o2;
+      out0[k] = o * 0.6 * st.on;
+      out1[k] = o2 * 0.35 * st.on;
+    }
+  }
+  function set(m) {
+    if (m.rpm != null) st.tRpm = m.rpm;
+    if (m.load != null) st.tLoad = m.load;
+    if (m.on != null) st.tOn = m.on;
+    if (m.cut != null) st.cut = m.cut ? 1 : 0;
+    if (m.pop) st.popReq = Math.max(st.popReq, m.pop);
+  }
+  return { process: process, set: set };
+}
+
+  let A = null;
+  async function initAudio(){
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const master = ctx.createGain(); master.gain.value = vol.value/100;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 3; comp.attack.value = .003;
+    master.connect(comp).connect(ctx.destination);
+
+    let src, send;
+    try {
+      const code = makeEngineDSP.toString() + `
+        class EngineV10 extends AudioWorkletProcessor {
+          constructor(){ super(); this.d = makeEngineDSP(sampleRate); this.port.onmessage = e => this.d.set(e.data); }
+          process(_, out){ const o = out[0]; this.d.process(o[0], o[1], o[0].length); return true; }
+        }
+        registerProcessor('engine-v10', EngineV10);`;
+      const url = URL.createObjectURL(new Blob([code], { type:'application/javascript' }));
+      await ctx.audioWorklet.addModule(url);
+      src = new AudioWorkletNode(ctx, 'engine-v10', { numberOfInputs:0, numberOfOutputs:1, outputChannelCount:[2] });
+      send = m => src.port.postMessage(m);
+    } catch {
+      const dsp = makeEngineDSP(ctx.sampleRate);
+      src = ctx.createScriptProcessor(1024, 1, 2);
+      src.onaudioprocess = e => { const b = e.outputBuffer; dsp.process(b.getChannelData(0), b.getChannelData(1), b.length); };
+      send = m => dsp.set(m);
+    }
+    const split = ctx.createChannelSplitter(2);
+    src.connect(split);
+
+    // Eksos-kjede
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 32;
+    const body = ctx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 150; body.Q.value = .9; body.gain.value = 4;
+    const rasp = ctx.createBiquadFilter(); rasp.type = 'peaking'; rasp.frequency.value = 2700; rasp.Q.value = 1.1;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .7;
+    const exG = ctx.createGain(); exG.gain.value = 2.6;
+    split.connect(hp, 0); hp.connect(body).connect(rasp).connect(lp).connect(exG).connect(master);
+
+    // Innsug: hyl som følger andre harmoniske av tenningsfrekvensen
+    const ibp = ctx.createBiquadFilter(); ibp.type = 'bandpass'; ibp.Q.value = 1.4;
+    const ilp = ctx.createBiquadFilter(); ilp.type = 'lowpass'; ilp.frequency.value = 6000;
+    const inG = ctx.createGain(); inG.gain.value = 0;
+    split.connect(ibp, 1); ibp.connect(ilp).connect(inG).connect(master);
+
+    // Startmotor
+    const starter = ctx.createOscillator(); starter.type = 'sawtooth'; starter.frequency.value = 160;
+    const stLp = ctx.createBiquadFilter(); stLp.type = 'lowpass'; stLp.frequency.value = 900;
+    const gStart = ctx.createGain(); gStart.gain.value = 0;
+    starter.connect(stLp).connect(gStart).connect(master);
+    starter.start();
+
+    A = { ctx, master, send, rasp, lp, ibp, inG, gStart, starter };
+  }
+
+  function updateAudio(){
+    if (!A) return;
+    const t = A.ctx.currentTime, r = Math.max(S.rpm, 1), f = r/60*5, e = S.eff, hi = r/REDLINE;
+    const on = S.starting > 0 ? .25 : (S.running || S.rpm > 50) ? 1 : 0;
+    A.send({ rpm: S.rpm, load: e, on, cut: S.cut || S.shiftT > 0 });
+    A.rasp.gain.setTargetAtTime(2 + 6*e*hi, t, .05);
+    A.lp.frequency.setTargetAtTime(Math.min(14000, 2200 + r*.7 + e*3500), t, .04);
+    A.ibp.frequency.setTargetAtTime(Math.min(7000, f*2), t, .02);
+    A.inG.gain.setTargetAtTime(S.running ? (.15 + 1.3*e) * Math.pow(hi, 1.4) * 1.6 : 0, t, .04);
+    A.gStart.gain.setTargetAtTime(S.starting > 0 ? .1 : 0, t, .03);
+    A.starter.frequency.setTargetAtTime(150 + Math.sin(t*38)*25, t, .01);
+  }
+  const pop = () => A?.send({ pop: 1 });
+
+
+  // ---------- GPS og bevegelse ----------
+  const G = { watch:null, vg:0, lastFix:null, ga:0, mot:0, hasMot:false, vEst:0 };
+  const $ = id => document.getElementById(id);
+  const setSt = (id, cls, text) => { $(id).innerHTML = `<span class="dot ${cls}"></span>${text}`; };
+
+  async function startSensors(){
+    if (!window.isSecureContext) { $('gpsMsg').textContent = 'Siden må åpnes over HTTPS for at GPS og sensorer skal virke.'; }
+    // Bevegelse
+    try {
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        const p = await DeviceMotionEvent.requestPermission();
+        if (p !== 'granted') throw new Error('nektet');
+      }
+      window.addEventListener('devicemotion', onMotion);
+      setSt('stMot','wait','Venter på data…');
+      setTimeout(()=>{ if (!G.hasMot) setSt('stMot','err','Ingen data. Bruker bare GPS.'); }, 3000);
+    } catch { setSt('stMot','err','Ikke tillatt. Bruker bare GPS.'); }
+    // Posisjon
+    if (!navigator.geolocation) { setSt('stGps','err','Støttes ikke'); return; }
+    setSt('stGps','wait','Venter på posisjon…');
+    G.watch = navigator.geolocation.watchPosition(onFix, onGeoErr, { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
+  }
+  function stopSensors(){
+    if (G.watch !== null) navigator.geolocation.clearWatch(G.watch);
+    G.watch = null; window.removeEventListener('devicemotion', onMotion);
+  }
+  function onMotion(e){
+    const a = e.acceleration;
+    if (!a || a.x == null) return;
+    if (!G.hasMot) { G.hasMot = true; setSt('stMot','ok','Akselerometer aktivt'); }
+    const m = Math.hypot(a.x, a.y, a.z);
+    G.mot += (m - G.mot) * .15;
+  }
+  function onFix(p){
+    const c = p.coords, t = p.timestamp/1000;
+    let v = (c.speed != null && c.speed >= 0) ? c.speed : null;
+    if (G.lastFix) {
+      const dt = t - G.lastFix.t;
+      if (v == null && dt > .3) {
+        const R=6371000, toR=Math.PI/180, dLa=(c.latitude-G.lastFix.lat)*toR, dLo=(c.longitude-G.lastFix.lon)*toR;
+        const h = Math.sin(dLa/2)**2 + Math.cos(G.lastFix.lat*toR)*Math.cos(c.latitude*toR)*Math.sin(dLo/2)**2;
+        v = 2*R*Math.asin(Math.sqrt(h))/dt;
+      }
+      if (v != null && dt > .2) G.ga += (((v - G.vg)/dt) - G.ga) * .6;
+    }
+    if (v != null) G.vg = v;
+    G.lastFix = { t, lat:c.latitude, lon:c.longitude };
+    setSt('stGps','ok','Mottar');
+    $('stAcc').textContent = `± ${Math.round(c.accuracy)} m`;
+    $('stSpd').textContent = `${Math.round(G.vg*3.6)} km/t`;
+    $('gpsMsg').textContent = 'Kjør. Lyden følger fart og akselerasjon.';
+  }
+  function onGeoErr(err){
+    setSt('stGps','err', err.code === 1 ? 'Ikke tillatt' : 'Ingen posisjon');
+    $('gpsMsg').textContent = err.code === 1
+      ? 'Posisjon er blokkert. Inne i Claude får siden aldri tilgang til GPS. Legg filen på en HTTPS-adresse og åpne den i mobilens nettleser, så virker denne modusen.'
+      : 'Fikk ikke posisjon ennå. Sjekk at stedstjenester er på, og at du er utendørs.';
+  }
+
+  // ---------- Simulering ----------
+  function shift(dir, now){
+    S.gear += dir; S.lastShift = now;
+    if (dir > 0) { S.shiftT = .11; if (S.thr > .7 && Math.random() < .6) pop(); }
+    else S.blipT = .18;
+  }
+
+  function step(dt, now){
+    // Gasspådrag
+    let target = 0;
+    if (S.mode === 'sim') {
+      target = Math.max(S.padThr, S.keyThr);
+    } else {
+      const sign = G.ga < -.25 ? -1 : 1;
+      let a = G.hasMot ? sign*G.mot : G.ga;
+      if (G.vg < .5 && G.mot < .4) a = 0;
+      G.vEst = Math.max(0, G.vEst + a*dt);
+      G.vEst += (G.vg - G.vEst) * Math.min(1, dt*1.5);
+      S.v = G.vEst; S.a = a;
+      const need = a + .12 + .00016*S.v*S.v;
+      target = a > -.2 ? clamp(need / Math.max(.3, driveAccel(1, Math.max(S.rpm,IDLE), S.gear)), 0, 1) : 0;
+      if (Math.abs(a) < .2 && S.v > 3) target = Math.max(target, .12);
+    }
+    if (!S.running) target = 0;
+    S.thr += (target - S.thr) * Math.min(1, dt*12);
+
+    if (S.shiftT > 0) S.shiftT -= dt;
+    if (S.blipT > 0) S.blipT -= dt;
+    let eff = S.shiftT > 0 ? 0 : S.thr;
+    if (S.blipT > 0) eff = Math.max(eff, .55);
+
+    // Turtallssperre
+    S.cut = S.running && S.rpm >= REDLINE - 15 && S.thr > .4 && ((now*22)|0) % 2 === 0;
+    if (S.cut) eff *= .1;
+    S.eff = eff;
+
+    // Fysikk i simulator
+    if (S.mode === 'sim') {
+      const ratio = RATIOS[S.gear-1];
+      const drive = (S.running && S.starting <= 0 && S.shiftT <= 0 && !S.cut) ? driveAccel(S.thr, S.rpm, S.gear) : 0;
+      const resist = .00016*S.v*S.v + (S.v > .1 ? .12 : 0);
+      const engBrake = (S.thr < .05 && S.v > 1) ? .5*(ratio/RATIOS[0])*(S.rpm/8000) + .2 : 0;
+      let a = drive - resist - engBrake - (S.brake ? 9 : 0);
+      S.v = Math.max(0, S.v + a*dt);
+      if (S.v === 0 && a < 0) a = 0;
+      S.a = a;
+    }
+
+    // Girkasse
+    if (S.v < 1.5 && S.gear > 1) S.gear = 1;
+    if (S.running && S.shiftT <= 0 && now - S.lastShift > .35) {
+      const r = rpmFromV(S.v, S.gear);
+      const up = 4800 + S.thr*3300, down = 1400 + S.thr*2600;
+      if (r > up && S.gear < 7) shift(1, now);
+      else if (S.gear > 1 && r < down && rpmFromV(S.v, S.gear-1) < 7700) shift(-1, now);
+    }
+
+    // Motorens turtall
+    if (S.starting > 0) {
+      S.starting -= dt;
+      S.rpm = 250 + Math.sin(now*40)*60;
+      if (S.starting <= 0) S.rpm = 1700;
+    } else {
+      let tgt = 0;
+      if (S.running) {
+        const wheel = rpmFromV(S.v, S.gear);
+        tgt = wheel;
+        if (S.gear === 1 && S.v < 9) {
+          const launch = IDLE + S.thr*(4200 - IDLE), k = S.v/9;
+          tgt = Math.max(wheel, launch*(1-k) + wheel*k);
+        }
+        if (S.v < .3) tgt = IDLE + eff*(REDLINE - IDLE); // fri turing når bilen står
+        if (S.blipT > 0) tgt += 400;
+        tgt = Math.max(IDLE, tgt);
+      }
+      const rate = !S.running ? 2.5 : S.shiftT > 0 ? 25 : 10;
+      S.rpm += (tgt - S.rpm) * Math.min(1, dt*rate);
+      S.rpm = Math.min(S.rpm, REDLINE + 60);
+      if (!S.running && S.rpm < 80) S.rpm = 0;
+    }
+  }
+
+  // ---------- Tegning ----------
+  const css = getComputedStyle(document.documentElement);
+  const C = k => css.getPropertyValue(k).trim();
+  const col = { line:C('--line'), fg:C('--fg'), muted:C('--muted'), amber:C('--amber'), red:C('--red') };
+  const cv = $('tach'), cx2 = cv.getContext('2d');
+  let W = 0;
+  function sizeCanvas(){
+    const r = cv.getBoundingClientRect(), dpr = Math.min(3, window.devicePixelRatio||1);
+    W = r.width; cv.width = Math.round(r.width*dpr); cv.height = Math.round(r.width*dpr);
+    cx2.setTransform(dpr,0,0,dpr,0,0);
+  }
+  const A0 = Math.PI*.75, SW = Math.PI*1.5, ang = r => A0 + clamp(r,0,MAXRPM)/MAXRPM*SW;
+  function drawTach(){
+    const c = cx2, w = W, cx = w/2, cy = w/2, R = w*.44;
+    c.clearRect(0,0,w,w);
+    c.lineCap = 'butt';
+    c.lineWidth = w*.012; c.strokeStyle = col.line;
+    c.beginPath(); c.arc(cx,cy,R,A0,A0+SW); c.stroke();
+    c.lineWidth = w*.03; c.strokeStyle = col.red;
+    c.beginPath(); c.arc(cx,cy,R-w*.009,ang(REDLINE),ang(MAXRPM)); c.stroke();
+    // aktiv bue
+    c.lineWidth = w*.012; c.strokeStyle = S.rpm >= REDLINE-200 ? col.red : col.amber;
+    c.shadowColor = c.strokeStyle; c.shadowBlur = 10;
+    c.beginPath(); c.arc(cx,cy,R,A0,ang(S.rpm)); c.stroke(); c.shadowBlur = 0;
+    // streker og tall
+    c.font = `600 ${Math.round(w*.062)}px "Saira Condensed","Arial Narrow",sans-serif`;
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    for (let r=0; r<=MAXRPM; r+=250){
+      const a = ang(r), major = r%1000===0, mid = r%500===0;
+      const len = major ? w*.055 : mid ? w*.035 : w*.018;
+      const r1 = R - w*.03, r2 = r1 - len;
+      c.strokeStyle = r >= REDLINE ? col.red : (major ? col.fg : col.muted);
+      c.lineWidth = major ? 2.4 : 1.2;
+      c.beginPath(); c.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1); c.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2); c.stroke();
+      if (major){
+        const rt = r2 - w*.05;
+        c.fillStyle = r >= 9000 ? col.red : col.fg;
+        c.fillText(String(r/1000), cx+Math.cos(a)*rt, cy+Math.sin(a)*rt);
+      }
+    }
+    c.fillStyle = col.muted; c.font = `500 ${Math.round(w*.03)}px Barlow,system-ui,sans-serif`;
+    c.fillText('× 1000 o/min', cx, cy - R*.5);
+    // nål
+    const a = ang(S.rpm);
+    c.strokeStyle = col.amber; c.lineWidth = w*.011; c.lineCap = 'round';
+    c.shadowColor = col.amber; c.shadowBlur = 12;
+    c.beginPath(); c.moveTo(cx+Math.cos(a)*R*.62, cy+Math.sin(a)*R*.62); c.lineTo(cx+Math.cos(a)*(R-w*.035), cy+Math.sin(a)*(R-w*.035)); c.stroke();
+    c.shadowBlur = 0;
+  }
+
+  const leds = [...document.querySelectorAll('#lights i')];
+  function drawUI(now){
+    drawTach();
+    const r = S.rpm, n = clamp(Math.floor((r-5600)/220)+1, 0, 10), flash = r >= 7900 && ((now*10)|0)%2===0;
+    leds.forEach((el,i)=>{ el.className = flash ? 'b' : (i < n ? (i<4?'g':i<7?'a':'r') : ''); });
+    $('gear').textContent = S.running || S.rpm > 0 ? (S.v < .3 && S.thr < .05 ? 'N' : S.gear) : '–';
+    $('kmh').textContent = Math.round(S.v*3.6);
+    $('rpm').textContent = Math.round(r/10)*10;
+    $('thr').textContent = Math.round(S.thr*100) + ' %';
+    $('g').textContent = (S.a/9.81).toFixed(2).replace('.',',');
+    $('hz').textContent = Math.round(r/60*5) + ' Hz';
+    $('gasFill').style.height = (S.padThr*100) + '%';
+    $('gas').setAttribute('aria-valuenow', Math.round(S.padThr*100));
+  }
+
+  let last = performance.now();
+  function loop(t){
+    const dt = Math.min(.05, (t-last)/1000); last = t;
+    const now = t/1000;
+    step(dt, now); updateAudio(); drawUI(now);
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Kontroller ----------
+  const vol = $('vol');
+  vol.addEventListener('input', () => { if (A) A.master.gain.setTargetAtTime(vol.value/100, A.ctx.currentTime, .05); });
+
+  let wake = null;
+  $('start').addEventListener('click', async () => {
+    if (!A) await initAudio();
+    if (A.ctx.state === 'suspended') await A.ctx.resume();
+    if (!S.running) {
+      S.running = true; S.starting = .75; S.gear = 1;
+      $('start').textContent = 'Stopp motor'; $('start').classList.add('on');
+      try { wake = await navigator.wakeLock?.request('screen'); } catch {}
+      if (S.mode === 'gps') startSensors();
+    } else {
+      S.running = false; S.starting = 0;
+      $('start').textContent = 'Start motor'; $('start').classList.remove('on');
+      try { await wake?.release(); } catch {} wake = null;
+      stopSensors();
+    }
+  });
+
+  function setMode(m){
+    S.mode = m;
+    $('tabSim').setAttribute('aria-selected', m==='sim'); $('tabGps').setAttribute('aria-selected', m==='gps');
+    $('simPanel').hidden = m !== 'sim'; $('gpsPanel').hidden = m !== 'gps';
+    S.padThr = 0; S.keyThr = 0; S.brake = false;
+    if (m === 'gps') { G.vEst = S.v; if (S.running) startSensors(); }
+    else stopSensors();
+  }
+  $('tabSim').addEventListener('click', () => setMode('sim'));
+  $('tabGps').addEventListener('click', () => setMode('gps'));
+
+  const gas = $('gas');
+  const gasAt = e => { const r = gas.getBoundingClientRect(); S.padThr = clamp(1 - (e.clientY - r.top)/r.height, .05, 1); };
+  gas.addEventListener('pointerdown', e => { gas.setPointerCapture(e.pointerId); gasAt(e); });
+  gas.addEventListener('pointermove', e => { if (gas.hasPointerCapture(e.pointerId)) gasAt(e); });
+  const gasUp = () => { S.padThr = 0; };
+  gas.addEventListener('pointerup', gasUp); gas.addEventListener('pointercancel', gasUp);
+
+  const brake = $('brake');
+  const bOn = e => { brake.setPointerCapture?.(e.pointerId); S.brake = true; brake.classList.add('down'); };
+  const bOff = () => { S.brake = false; brake.classList.remove('down'); };
+  brake.addEventListener('pointerdown', bOn); brake.addEventListener('pointerup', bOff); brake.addEventListener('pointercancel', bOff);
+
+  const isGas = k => k==='ArrowUp' || k==='w' || k==='W';
+  const isBrake = k => k==='ArrowDown' || k==='s' || k==='S' || k===' ';
+  window.addEventListener('keydown', e => {
+    if (S.mode !== 'sim' || e.target.tagName === 'INPUT') return;
+    if (isGas(e.key)) { S.keyThr = 1; e.preventDefault(); }
+    if (isBrake(e.key) && e.target.tagName !== 'BUTTON') { S.brake = true; brake.classList.add('down'); e.preventDefault(); }
+  });
+  window.addEventListener('keyup', e => {
+    if (isGas(e.key)) S.keyThr = 0;
+    if (isBrake(e.key)) bOff();
+  });
+  window.addEventListener('blur', () => { S.keyThr = 0; S.padThr = 0; bOff(); });
+
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && S.running) { try { wake = await navigator.wakeLock?.request('screen'); } catch {} }
+  });
+
+  sizeCanvas(); window.addEventListener('resize', sizeCanvas);
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body></html>
